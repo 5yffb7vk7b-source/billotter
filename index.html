@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Otterbill — Free Invoice Generator. No Signup. Your Data Stays in Your Browser.</title>
+  <meta name="description" content="Create a professional PDF invoice in under a minute. Free, no account, no watermark on your numbers — everything runs in your browser and nothing is uploaded anywhere.">
+  <meta property="og:title" content="Otterbill — Free Invoice Generator, No Signup">
+  <meta property="og:description" content="Make a professional PDF invoice in under a minute. No account, no uploads — your data never leaves your browser.">
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#0f172a">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A6%A6%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Otterbill",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Any",
+    "description": "Free in-browser invoice generator. No signup, no uploads — data never leaves your device.",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  }
+  </script>
+</head>
+<body>
+
+<header class="topbar no-print">
+  <div class="topbar-inner">
+    <a class="brand" href="#top">🦦 <strong>Otterbill</strong></a>
+    <nav class="topnav">
+      <a href="#faq">FAQ</a>
+      <button class="btn btn-pro" id="btn-open-pro">✨ Pro</button>
+    </nav>
+  </div>
+</header>
+
+<section class="hero no-print" id="top">
+  <h1>Invoice done. Coffee still hot.</h1>
+  <p class="hero-sub">A free invoice generator that runs entirely in your browser.
+    No signup, no upload, no “trial”. Fill it in, hit <strong>Download&nbsp;PDF</strong>, get paid.</p>
+  <div class="hero-badges">
+    <span>🔒 Data never leaves your device</span>
+    <span>⚡ No account needed</span>
+    <span>💾 Autosaves locally</span>
+  </div>
+  <a class="btn btn-primary" href="#app">Create an invoice ↓</a>
+</section>
+
+<main class="workspace" id="app">
+
+  <aside class="controls no-print">
+    <div class="control-group">
+      <label for="currency">Currency</label>
+      <select id="currency"></select>
+    </div>
+    <div class="control-group">
+      <label for="tax-rate">Tax rate %</label>
+      <input type="number" id="tax-rate" min="0" max="100" step="0.01" placeholder="0">
+    </div>
+    <div class="control-group">
+      <label for="discount">Discount %</label>
+      <input type="number" id="discount" min="0" max="100" step="0.01" placeholder="0">
+    </div>
+    <div class="control-actions">
+      <button class="btn btn-primary btn-block" id="btn-download">⬇ Download PDF</button>
+      <button class="btn btn-ghost btn-block" id="btn-new">＋ New invoice</button>
+      <button class="btn btn-ghost btn-block btn-danger" id="btn-clear">🗑 Clear everything</button>
+    </div>
+    <p class="save-note" id="save-note">Saved locally ✓</p>
+  </aside>
+
+  <div class="sheet-wrap">
+    <div class="sheet" id="sheet">
+      <div class="sheet-head">
+        <div class="logo-slot no-print-hide">
+          <img id="logo-img" alt="Company logo" hidden>
+          <button class="logo-upload no-print" id="btn-logo">＋ Add logo</button>
+          <button class="logo-remove no-print" id="btn-logo-remove" hidden>Remove logo</button>
+          <input type="file" id="logo-file" accept="image/*" hidden>
+        </div>
+        <div class="doc-meta">
+          <div class="doc-title">INVOICE</div>
+          <div class="meta-row"><label for="inv-number">Nº</label><input id="inv-number" placeholder="INV-0001"></div>
+          <div class="meta-row"><label for="inv-date">Date</label><input id="inv-date" type="date"></div>
+          <div class="meta-row"><label for="inv-due">Due</label><input id="inv-due" type="date"></div>
+        </div>
+      </div>
+
+      <div class="parties">
+        <div class="party">
+          <div class="party-label">From</div>
+          <textarea id="from" rows="4" placeholder="Your name or business&#10;Address&#10;Email / phone&#10;Tax / VAT ID"></textarea>
+        </div>
+        <div class="party">
+          <div class="party-label">Bill to</div>
+          <textarea id="to" rows="4" placeholder="Client name or business&#10;Address&#10;Email"></textarea>
+        </div>
+      </div>
+
+      <table class="items">
+        <thead>
+          <tr>
+            <th class="col-desc">Description</th>
+            <th class="col-qty">Qty</th>
+            <th class="col-rate">Rate</th>
+            <th class="col-amount">Amount</th>
+            <th class="col-x no-print"></th>
+          </tr>
+        </thead>
+        <tbody id="items-body"><!-- rows injected --></tbody>
+      </table>
+      <button class="btn btn-ghost add-item no-print" id="btn-add-item">＋ Add line item</button>
+
+      <div class="totals">
+        <div class="totals-row"><span>Subtotal</span><span id="t-subtotal">$0.00</span></div>
+        <div class="totals-row" id="row-discount" hidden><span>Discount (<span id="t-discount-pct"></span>)</span><span id="t-discount">−$0.00</span></div>
+        <div class="totals-row" id="row-tax" hidden><span>Tax (<span id="t-tax-pct"></span>)</span><span id="t-tax">$0.00</span></div>
+        <div class="totals-row totals-grand"><span>Total</span><span id="t-total">$0.00</span></div>
+        <div class="totals-row totals-paid">
+          <span>Amount paid</span>
+          <span class="paid-input"><input type="number" id="amount-paid" min="0" step="0.01" placeholder="0.00"></span>
+        </div>
+        <div class="totals-row totals-due"><span>Balance due</span><span id="t-due">$0.00</span></div>
+      </div>
+
+      <div class="notes-grid">
+        <div>
+          <div class="party-label">Notes</div>
+          <textarea id="notes" rows="2" placeholder="Thanks for your business!"></textarea>
+        </div>
+        <div>
+          <div class="party-label">Terms</div>
+          <textarea id="terms" rows="2" placeholder="Payment due within 14 days. Bank details: …"></textarea>
+        </div>
+      </div>
+
+      <div class="sheet-footer" id="branding-footer">Created with Otterbill — the free, private invoice generator</div>
+    </div>
+  </div>
+</main>
+
+<section class="faq no-print" id="faq">
+  <h2>Questions, answered</h2>
+  <details open>
+    <summary>Is it really free?</summary>
+    <p>Yes. The generator is fully free: unlimited invoices, all features, PDF download. The only paid thing is
+    <strong>Pro</strong> — a one-time $9 that removes the small “Created with Otterbill” line from your PDFs and
+    supports development. That's it. No subscription, no locked features.</p>
+  </details>
+  <details>
+    <summary>Where does my data go?</summary>
+    <p>Nowhere. This page has no backend and makes no network requests with your data. Everything you type is stored
+    in your own browser (localStorage) so it's still there when you come back. Clear it any time with one click.</p>
+  </details>
+  <details>
+    <summary>How do I get the PDF?</summary>
+    <p><strong>Download PDF</strong> opens your browser's print dialog with the invoice perfectly formatted —
+    choose “Save as PDF” as the destination. Works on every OS with no plugins.</p>
+  </details>
+  <details>
+    <summary>Can I use my own logo and currency?</summary>
+    <p>Yes — upload any image as your logo (it stays on your device) and pick from 25+ currencies with correct
+    formatting.</p>
+  </details>
+</section>
+
+<footer class="site-footer no-print">
+  <p>🦦 Otterbill — made for freelancers who'd rather be working.</p>
+</footer>
+
+<!-- Pro modal -->
+<div class="modal-backdrop no-print" id="pro-modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pro-title">
+    <button class="modal-close" id="btn-close-pro" aria-label="Close">✕</button>
+    <div id="pro-locked">
+      <h3 id="pro-title">✨ Otterbill Pro</h3>
+      <p class="pro-price"><strong>$9</strong> one-time · lifetime · no subscription</p>
+      <ul class="pro-list">
+        <li>Removes the “Created with Otterbill” line from your PDFs</li>
+        <li>Supports independent development</li>
+        <li>All future Pro features included forever</li>
+      </ul>
+      <a class="btn btn-primary btn-block" id="btn-buy" href="#" target="_blank" rel="noopener">Get Pro — $9</a>
+      <p class="pro-hint" id="buy-unavailable" hidden>Payments are being set up — check back soon. Everything else is free meanwhile. 🦦</p>
+      <div class="unlock-row">
+        <input id="unlock-code" placeholder="Unlock code from your receipt">
+        <button class="btn btn-ghost" id="btn-unlock">Activate</button>
+      </div>
+      <p class="pro-hint" id="unlock-msg"></p>
+    </div>
+    <div id="pro-active" hidden>
+      <h3>✨ Pro is active</h3>
+      <p>Thank you for supporting Otterbill! Your PDFs are now branding-free.</p>
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
