@@ -15,7 +15,8 @@
   <meta name="twitter:description" content="Make a professional PDF invoice in under a minute. No account, no uploads — your data never leaves your browser.">
   <meta name="twitter:image" content="https://billotter.com/og.png">
   <link rel="canonical" href="https://billotter.com/">
-  <meta name="theme-color" content="#0f172a">
+  <meta name="theme-color" content="#0a1b1e">
+  <link rel="preload" href="fonts/fraunces-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A6%A6%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="css/style.css">
   <script type="application/ld+json">
@@ -62,14 +63,17 @@
 </header>
 
 <section class="hero no-print" id="top">
-  <h1>Invoice done. Coffee still hot.</h1>
+  <h1>Invoice done.<br><em>Coffee still hot.</em></h1>
   <p class="hero-sub">A free invoice generator that runs entirely in your browser.
     No signup, no upload, no “trial”. Fill it in, hit <strong>Download&nbsp;PDF</strong>, get paid.</p>
-  <div class="hero-badges">
-    <span>🔒 Data never leaves your device</span>
-    <span>⚡ No account needed</span>
-    <span>💾 Autosaves locally</span>
-    <span>🧾 Invoices, estimates, quotes &amp; receipts</span>
+  <div class="receipt" role="img" aria-label="Receipt showing what Billotter costs you: zero signups, zero bytes of data uploaded, unlimited documents, total due $0.00">
+    <div class="receipt-head">Billotter · customer receipt</div>
+    <div class="receipt-row"><span>Signups required</span><i></i><span>0</span></div>
+    <div class="receipt-row"><span>Your data uploaded</span><i></i><span>0 bytes</span></div>
+    <div class="receipt-row"><span>Invoices &amp; estimates</span><i></i><span>unlimited</span></div>
+    <div class="receipt-row"><span>Autosave</span><i></i><span>local only</span></div>
+    <div class="receipt-row receipt-total"><span>Total due</span><i></i><span>$0.00</span></div>
+    <div class="receipt-foot">coffee status: still hot · thank you 🦦</div>
   </div>
   <a class="btn btn-primary" href="#app">Create an invoice ↓</a>
 </section>
@@ -255,6 +259,7 @@
 
 <footer class="site-footer no-print">
   <p>🦦 Billotter — made for freelancers who'd rather be working.</p>
+  <p class="foot-fine">no cookies · no analytics · no servers — check the network tab</p>
 </footer>
 
 <!-- Pro modal -->
