@@ -408,7 +408,7 @@
         msg.textContent = "Unlocked — thank you! 🦦";
         msg.className = "pro-hint ok";
       } else {
-        msg.textContent = "That code doesn't look right — it's on your Stripe receipt page.";
+        msg.textContent = "That code doesn't look right — it's shown right after your purchase.";
         msg.className = "pro-hint err";
       }
     } catch {
