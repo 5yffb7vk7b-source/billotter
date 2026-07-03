@@ -12,6 +12,15 @@
   const PRO_KEY = "otterbill.pro";
   const DEFAULT_ACCENT = "#0d9488";
 
+  // value = requires Pro
+  const THEMES = { classic: false, minimal: false, serif: true, bold: true };
+  const DOC_TYPES = {
+    invoice: { title: "INVOICE", due: "Due" },
+    estimate: { title: "ESTIMATE", due: "Valid" },
+    quote: { title: "QUOTE", due: "Valid" },
+    receipt: { title: "RECEIPT", due: "Due" },
+  };
+
   const CURRENCIES = [
     "USD","EUR","GBP","CAD","AUD","NZD","CHF","JPY","CNY","INR","SGD","HKD",
     "SEK","NOK","DKK","PLN","CZK","RON","HUF","BRL","MXN","ZAR","AED","TRY","ILS","KRW"
@@ -101,7 +110,8 @@
   const $ = (id) => document.getElementById(id);
   const els = {
     currency: $("currency"), taxRate: $("tax-rate"), discount: $("discount"),
-    accent: $("accent-color"),
+    accent: $("accent-color"), docType: $("doc-type"), theme: $("theme"),
+    docTitle: $("doc-title"), dueLabel: $("due-label"),
     number: $("inv-number"), date: $("inv-date"), due: $("inv-due"),
     from: $("from"), to: $("to"), notes: $("notes"), terms: $("terms"),
     itemsBody: $("items-body"), amountPaid: $("amount-paid"),
@@ -117,7 +127,7 @@
     number: "INV-0001", date: todayISO(), due: "",
     from: "", to: "", notes: "", terms: "",
     currency: guessCurrency(), taxRate: "", discount: "", amountPaid: "",
-    accent: DEFAULT_ACCENT,
+    accent: DEFAULT_ACCENT, docType: "invoice", theme: "classic",
     logo: "", items: [{ desc: "", qty: "1", rate: "" }],
   });
 
@@ -144,6 +154,8 @@
     s.items = s.items.map((it) => ({ desc: String(it.desc ?? ""), qty: String(it.qty ?? ""), rate: String(it.rate ?? "") }));
     if (!CURRENCIES.includes(s.currency)) s.currency = "USD";
     if (!/^#[0-9a-fA-F]{6}$/.test(s.accent)) s.accent = DEFAULT_ACCENT;
+    if (!(s.docType in DOC_TYPES)) s.docType = "invoice";
+    if (!(s.theme in THEMES)) s.theme = "classic";
     return s;
   }
 
@@ -250,8 +262,17 @@
       };
 
       const tdDesc = document.createElement("td");
-      const desc = mkInput({ placeholder: "Description of work or product", value: item.desc, ariaLabel: `Line ${i + 1} description` });
+      // Textarea, not input: long descriptions wrap (and print in full) instead of clipping.
+      const desc = document.createElement("textarea");
+      desc.rows = 1;
+      desc.placeholder = "Description of work or product";
+      desc.value = item.desc;
+      desc.setAttribute("aria-label", `Line ${i + 1} description`);
+      desc.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && isLast()) { e.preventDefault(); addItem(true); }
+      });
       desc.addEventListener("input", () => { item.desc = desc.value; save(); });
+      autogrow(desc);
       tdDesc.appendChild(desc);
 
       const tdQty = document.createElement("td");
@@ -379,6 +400,26 @@
   });
   els.btnLogoRemove.addEventListener("click", () => { state.logo = ""; renderLogo(); save(); });
 
+  // ---------- document type & theme ----------
+  function applyDoc() {
+    const sheet = $("sheet");
+    Object.keys(THEMES).forEach((t) => sheet.classList.toggle("theme-" + t, state.theme === t));
+    els.docTitle.textContent = DOC_TYPES[state.docType].title;
+    els.dueLabel.textContent = DOC_TYPES[state.docType].due;
+    els.docType.value = state.docType;
+    els.theme.value = state.theme;
+  }
+
+  els.theme.addEventListener("change", () => {
+    if (THEMES[els.theme.value] && !isPro()) {
+      els.theme.value = state.theme; // snap back, pitch Pro
+      openModal();
+      return;
+    }
+    state.theme = els.theme.value;
+    applyDoc(); save();
+  });
+
   // ---------- accent color (Pro) ----------
   function applyAccent() {
     const sheet = $("sheet");
@@ -400,8 +441,13 @@
   $("btn-download").addEventListener("click", () => window.print());
 
   // Keep PDFs clean: no placeholder ghost-text, no empty optional rows.
+  // Also name the saved PDF after the document ("INV-0007 — Acme Co"), not the page title.
   const printHidden = [];
+  let prePrintTitle = null;
   window.addEventListener("beforeprint", () => {
+    prePrintTitle = document.title;
+    const client = (state.to.split("\n")[0] || "").trim();
+    document.title = [state.number || DOC_TYPES[state.docType].title, client].filter(Boolean).join(" — ");
     document.querySelectorAll(".sheet input, .sheet textarea").forEach((el) => {
       if (!el.value && el.placeholder) { el.dataset.ph = el.placeholder; el.placeholder = ""; }
     });
@@ -412,6 +458,7 @@
     printHidden.forEach((row) => { if (row) row.style.visibility = "hidden"; });
   });
   window.addEventListener("afterprint", () => {
+    if (prePrintTitle !== null) { document.title = prePrintTitle; prePrintTitle = null; }
     document.querySelectorAll(".sheet input, .sheet textarea").forEach((el) => {
       if (el.dataset.ph) { el.placeholder = el.dataset.ph; delete el.dataset.ph; }
     });
@@ -427,6 +474,57 @@
       date: todayISO(), due: "", to: "", notes: "", amountPaid: "",
       items: [{ desc: "", qty: "1", rate: "" }] };
     hydrate(); save();
+  });
+
+  // Same document again for a repeat client: everything kept, fresh number & date.
+  $("btn-duplicate").addEventListener("click", () => {
+    upsertCurrent();
+    state = { ...normalize(JSON.parse(JSON.stringify(state))), id: newId(),
+      number: nextNumber([state.number, ...invoices.map((i) => i.number)]),
+      date: todayISO() };
+    hydrate(); save();
+  });
+
+  // ---------- backup (export / import) ----------
+  $("btn-export").addEventListener("click", () => {
+    upsertCurrent();
+    const payload = { app: "otterbill", version: 1, exported: todayISO(), current: state, invoices };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `otterbill-backup-${todayISO()}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
+
+  $("btn-import").addEventListener("click", () => $("import-file").click());
+  $("import-file").addEventListener("change", () => {
+    const file = $("import-file").files[0];
+    $("import-file").value = "";
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        const incoming = Array.isArray(data) ? data : Array.isArray(data.invoices) ? data.invoices : null;
+        if (!incoming) throw new Error("no invoices");
+        let added = 0;
+        incoming.map(normalize).forEach((inv) => {
+          if (inv.id !== state.id && !invoices.some((x) => x.id === inv.id)) { invoices.push(inv); added++; }
+        });
+        // Restore the exported working copy too — but never over unsaved work.
+        if (data.current && !hasContent(state)) {
+          const cur = normalize(data.current);
+          if (invoices.some((x) => x.id === cur.id)) cur.id = newId();
+          state = cur;
+        }
+        hydrate(); save();
+        setTimeout(() => { els.saveNote.textContent = `Imported ${added} invoice${added === 1 ? "" : "s"} ✓`; }, 350);
+      } catch {
+        els.saveNote.textContent = "That file doesn't look like an Otterbill backup.";
+      }
+    };
+    reader.readAsText(file);
   });
 
   // Highest trailing number across known invoices, plus one — avoids duplicates.
@@ -529,6 +627,7 @@
       }
     });
     bind(els.currency, "currency", () => { renderItems(); renderTotals(); });
+    bind(els.docType, "docType", applyDoc);
     bind(els.taxRate, "taxRate", renderTotals);
     bind(els.discount, "discount", renderTotals);
     bind(els.number, "number");
@@ -540,6 +639,7 @@
     bind(els.terms, "terms");
     bind(els.amountPaid, "amountPaid", renderTotals);
     document.querySelectorAll(".sheet textarea").forEach(autogrow);
+    applyDoc();
     applyAccent();
     renderLogo();
     renderItems();

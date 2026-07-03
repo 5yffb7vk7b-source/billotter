@@ -121,6 +121,15 @@ a { color: inherit; }
   background: none; color: #64748b; padding: 0 .4rem;
 }
 .inv-del:hover { color: #fca5a5; background: rgba(220, 38, 38, .12); }
+.backup-row {
+  display: flex; gap: .45rem; justify-content: center; align-items: baseline;
+  margin-top: .7rem; font-size: .76rem; color: #64748b;
+}
+.linklike {
+  font: inherit; font-size: .76rem; background: none; border: 0; padding: 0;
+  color: #94a3b8; cursor: pointer; text-decoration: underline;
+}
+.linklike:hover { color: #e2e8f0; }
 
 /* ---------- the invoice sheet ---------- */
 .sheet-wrap { min-width: 0; overflow-x: auto; }
@@ -173,6 +182,7 @@ a { color: inherit; }
   color: var(--ink-soft); border-bottom: 2px solid var(--ink); padding: .4rem .3rem;
 }
 .items td { border-bottom: 1px solid var(--line); padding: .25rem .15rem; vertical-align: middle; }
+.items td textarea { resize: none; display: block; }
 .col-qty { width: 4.5rem; } .col-rate { width: 7rem; } .col-amount { width: 8rem; } .col-x { width: 2rem; }
 .items td.col-amount, .items th.col-amount { text-align: right; }
 .items td.col-amount { font-variant-numeric: tabular-nums; padding-right: .4rem; }
@@ -207,6 +217,32 @@ a { color: inherit; }
   font-size: .72rem; color: #94a3b8; text-align: center;
 }
 body.pro .sheet-footer { display: none; }
+
+/* ---------- sheet themes ---------- */
+/* Minimal — airy, thin rules, quiet color (free) */
+.sheet.theme-minimal .doc-title { font-weight: 300; letter-spacing: .3em; color: var(--ink); }
+.sheet.theme-minimal .party-label { color: var(--ink-soft); font-weight: 600; letter-spacing: .14em; }
+.sheet.theme-minimal .items th { border-bottom: 1px solid var(--line); font-weight: 600; }
+.sheet.theme-minimal .totals-grand { border-top: 1px solid var(--ink); }
+.sheet.theme-minimal .totals-due { background: transparent; border: 1px solid var(--line); }
+
+/* Serif — traditional, letterhead feel (Pro) */
+.sheet.theme-serif { font-family: Georgia, "Times New Roman", Times, serif; }
+.sheet.theme-serif .doc-title { font-weight: 400; letter-spacing: .18em; }
+.sheet.theme-serif .party-label { letter-spacing: .12em; }
+.sheet.theme-serif .items th { font-weight: 700; letter-spacing: .1em; }
+
+/* Bold — accent band + filled table header (Pro) */
+.sheet.theme-bold { border-top: 14px solid var(--sheet-accent); }
+.sheet.theme-bold .doc-title {
+  background: var(--sheet-accent); color: #fff;
+  display: inline-block; padding: .15rem .8rem; border-radius: 4px;
+}
+.sheet.theme-bold .items th {
+  background: var(--sheet-accent); color: #fff;
+  border-bottom: 0; padding: .45rem .5rem;
+}
+.sheet.theme-bold .totals-grand { border-top: 2px solid var(--sheet-accent); }
 
 /* ---------- faq / footer ---------- */
 .faq { max-width: 720px; margin: 0 auto; padding: 3rem 1.25rem; }
@@ -319,5 +355,9 @@ body.pro .sheet-footer { display: none; }
   .items thead { display: table-header-group; }
   .items tr, .totals, .notes-grid, .sheet-footer { break-inside: avoid; }
   .party-label, .doc-title { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .sheet.theme-bold { border-top: 14px solid var(--sheet-accent); }
+  .theme-bold .doc-title, .theme-bold .items th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .theme-minimal .totals-due { background: transparent; }
   input::placeholder, textarea::placeholder { color: transparent !important; }
+  .sheet input[type=date]::-webkit-calendar-picker-indicator { display: none; }
 }
