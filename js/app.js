@@ -1,4 +1,4 @@
-/* Otterbill — fully client-side invoice generator. No network calls, ever. */
+/* Billotter — fully client-side invoice generator. No network calls, ever. */
 (() => {
   "use strict";
 
@@ -7,9 +7,9 @@
   // SHA-256 of the Pro unlock code delivered after purchase.
   const UNLOCK_HASH = "7b4b6a2a5e54e7f9d475d45fcb631bdb38b4c243145b7c650dd388fd958155ff";
 
-  const STORE_KEY = "otterbill.invoice.v1";
-  const LIST_KEY = "otterbill.invoices.v1";
-  const PRO_KEY = "otterbill.pro";
+  const STORE_KEY = "billotter.invoice.v1";
+  const LIST_KEY = "billotter.invoices.v1";
+  const PRO_KEY = "billotter.pro";
   const DEFAULT_ACCENT = "#0d9488";
 
   // value = requires Pro
@@ -488,11 +488,11 @@
   // ---------- backup (export / import) ----------
   $("btn-export").addEventListener("click", () => {
     upsertCurrent();
-    const payload = { app: "otterbill", version: 1, exported: todayISO(), current: state, invoices };
+    const payload = { app: "billotter", version: 1, exported: todayISO(), current: state, invoices };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `otterbill-backup-${todayISO()}.json`;
+    a.download = `billotter-backup-${todayISO()}.json`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   });
@@ -521,7 +521,7 @@
         hydrate(); save();
         setTimeout(() => { els.saveNote.textContent = `Imported ${added} invoice${added === 1 ? "" : "s"} ✓`; }, 350);
       } catch {
-        els.saveNote.textContent = "That file doesn't look like an Otterbill backup.";
+        els.saveNote.textContent = "That file doesn't look like an Billotter backup.";
       }
     };
     reader.readAsText(file);

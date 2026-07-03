@@ -1,8 +1,8 @@
-# 🦦 Otterbill
+# 🦦 Billotter
 
 **Free invoice generator that runs entirely in your browser.** No signup, no uploads, no backend — your data never leaves your device.
 
-**Live app → https://5yffb7vk7b-source.github.io/otterbill/**
+**Live app → https://billotter.com/**
 
 ## Features
 
@@ -14,7 +14,7 @@
 
 ## Pro
 
-A one-time $9 unlock removes the small "Created with Otterbill" line from PDFs. Everything else is free forever.
+A one-time $9 unlock removes the small "Created with Billotter" line from PDFs. Everything else is free forever.
 
 ## Development
 

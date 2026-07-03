@@ -6,7 +6,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-const BASE = "https://5yffb7vk7b-source.github.io/otterbill";
+const BASE = "https://billotter.com";
 const FAVICON = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A6%A6%3C/text%3E%3C/svg%3E`;
 
 const NICHES = [
@@ -325,7 +325,7 @@ ${extraLd}</head>
 const topbar = (root) => `
 <header class="topbar">
   <div class="topbar-inner">
-    <a class="brand" href="${root}">🦦 <strong>Otterbill</strong></a>
+    <a class="brand" href="${root}">🦦 <strong>Billotter</strong></a>
     <nav class="topnav">
       <a href="${root}templates/">Templates</a>
       <a href="${root}#faq">FAQ</a>
@@ -337,7 +337,7 @@ const topbar = (root) => `
 
 const footer = `
 <footer class="site-footer">
-  <p>🦦 Otterbill — made for freelancers who'd rather be working.</p>
+  <p>🦦 Billotter — made for freelancers who'd rather be working.</p>
 </footer>
 </body>
 </html>
@@ -361,7 +361,7 @@ const breadcrumbLd = (name, slug) => `  <script type="application/ld+json">
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Otterbill", item: `${BASE}/` },
+      { "@type": "ListItem", position: 1, name: "Billotter", item: `${BASE}/` },
       { "@type": "ListItem", position: 2, name: "Invoice templates", item: `${BASE}/templates/` },
       { "@type": "ListItem", position: 3, name, item: `${BASE}/templates/${slug}/` },
     ],
@@ -388,7 +388,7 @@ function nichePage(n) {
     topbar(root) +
     `
 <main class="page">
-  <nav class="crumbs"><a href="${root}">Otterbill</a> › <a href="${root}templates/">Templates</a> › ${n.name}</nav>
+  <nav class="crumbs"><a href="${root}">Billotter</a> › <a href="${root}templates/">Templates</a> › ${n.name}</nav>
   <h1>${n.name} invoice template</h1>
   <p class="lede">${n.lede}</p>
   <div class="cta-row">
@@ -423,7 +423,7 @@ ${n.tips.map((t) => `  <p>${t}</p>`).join("\n")}
 ${n.faq.map((f) => `  <details>\n    <summary>${f.q}</summary>\n    <p>${f.a}</p>\n  </details>`).join("\n")}
 
 ${otherTemplates(n.slug, root)}
-  <p class="backlink"><a href="${root}">← Otterbill: the free, private, in-browser invoice generator</a></p>
+  <p class="backlink"><a href="${root}">← Billotter: the free, private, in-browser invoice generator</a></p>
 </main>
 ` +
     footer
@@ -434,7 +434,7 @@ ${otherTemplates(n.slug, root)}
 
 function hubPage() {
   const root = "../";
-  const title = "Free Invoice Templates — Pre-Filled for Your Line of Work | Otterbill";
+  const title = "Free Invoice Templates — Pre-Filled for Your Line of Work | Billotter";
   const desc =
     "Free invoice templates for photographers, designers, developers, writers, consultants, tutors, videographers and cleaners. Each opens pre-filled in a private, in-browser generator — no signup.";
   const ld = `  <script type="application/ld+json">
@@ -466,7 +466,7 @@ ${NICHES.map((n) => `    <li><a class="tpl-card" href="${n.slug}/"><strong>${n.e
   </ul>
 
   <h2>How these templates work</h2>
-  <p>Click a template and the <a href="${root}">Otterbill generator</a> opens with that trade's usual line items already
+  <p>Click a template and the <a href="${root}">Billotter generator</a> opens with that trade's usual line items already
   in place — session fees for photographers, revision rounds for designers, kill-fee terms for writers. Put in your own
   rates and client details, hit <strong>Download PDF</strong>, done.</p>
   <p>There's no account and no upload: the generator is a single page that runs entirely in your browser and saves your
