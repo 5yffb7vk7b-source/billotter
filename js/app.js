@@ -584,7 +584,7 @@
       if (await sha256hex(code) === UNLOCK_HASH) {
         localStorage.setItem(PRO_KEY, "1");
         renderPro();
-        msg.textContent = "Unlocked — thank you! 🦦";
+        msg.textContent = "Unlocked — thank you!";
         msg.className = "pro-hint ok";
       } else {
         msg.textContent = "That code doesn't look right — it's shown right after your purchase.";

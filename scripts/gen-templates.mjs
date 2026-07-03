@@ -7,7 +7,8 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const BASE = "https://billotter.com";
-const FAVICON = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A6%A6%3C/text%3E%3C/svg%3E`;
+const FAVICON = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='5' y='3' width='22' height='26' rx='5' fill='%230d9488'/%3E%3Cpath d='M10.5 13.5c1.8-2.2 3.7-2.2 5.5 0s3.7 2.2 5.5 0' stroke='%23f2f7f3' stroke-width='2.4' stroke-linecap='round' fill='none'/%3E%3Cpath d='M10.5 20c1.8-2.2 3.7-2.2 5.5 0s3.7 2.2 5.5 0' stroke='%23f2f7f3' stroke-width='2.4' stroke-linecap='round' opacity='.5' fill='none'/%3E%3C/svg%3E`;
+const MARK = `<svg class="mark" width="21" height="21" viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect x="5" y="3" width="22" height="26" rx="5" fill="#0d9488"/><path d="M10.5 13.5c1.8-2.2 3.7-2.2 5.5 0s3.7 2.2 5.5 0" stroke="#f2f7f3" stroke-width="2.4" stroke-linecap="round"/><path d="M10.5 20c1.8-2.2 3.7-2.2 5.5 0s3.7 2.2 5.5 0" stroke="#f2f7f3" stroke-width="2.4" stroke-linecap="round" opacity=".5"/></svg>`;
 
 const NICHES = [
   {
@@ -325,7 +326,7 @@ ${extraLd}</head>
 const topbar = (root) => `
 <header class="topbar">
   <div class="topbar-inner">
-    <a class="brand" href="${root}">🦦 <strong>Billotter</strong></a>
+    <a class="brand" href="${root}">${MARK} <strong>Billotter</strong></a>
     <nav class="topnav">
       <a href="${root}templates/">Templates</a>
       <a href="${root}#faq">FAQ</a>
@@ -337,7 +338,8 @@ const topbar = (root) => `
 
 const footer = `
 <footer class="site-footer">
-  <p>🦦 Billotter — made for freelancers who'd rather be working.</p>
+  <p>Billotter — made for freelancers who'd rather be working.</p>
+  <p class="foot-fine">no cookies · no analytics · no servers — check the network tab</p>
 </footer>
 </body>
 </html>
@@ -373,7 +375,7 @@ const otherTemplates = (currentSlug, root) => `
   <h2>More free invoice templates</h2>
   <ul class="tpl-grid">
 ${NICHES.filter((n) => n.slug !== currentSlug)
-  .map((n) => `    <li><a class="tpl-card" href="${root}templates/${n.slug}/"><strong>${n.emoji} ${n.name}</strong><span>${n.blurb}</span></a></li>`)
+  .map((n) => `    <li><a class="tpl-card" href="${root}templates/${n.slug}/"><strong>${n.name}</strong><span>${n.blurb}</span></a></li>`)
   .join("\n")}
   </ul>
 `;
@@ -462,7 +464,7 @@ function hubPage() {
   for that line of work. Change anything — it's your invoice. No signup, and nothing you type leaves your browser.</p>
 
   <ul class="tpl-grid tpl-grid-lg">
-${NICHES.map((n) => `    <li><a class="tpl-card" href="${n.slug}/"><strong>${n.emoji} ${n.name}</strong><span>${n.blurb}</span></a></li>`).join("\n")}
+${NICHES.map((n) => `    <li><a class="tpl-card" href="${n.slug}/"><strong>${n.name}</strong><span>${n.blurb}</span></a></li>`).join("\n")}
   </ul>
 
   <h2>How these templates work</h2>
