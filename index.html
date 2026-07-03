@@ -8,6 +8,13 @@
   <meta property="og:title" content="Otterbill — Free Invoice Generator, No Signup">
   <meta property="og:description" content="Make a professional PDF invoice in under a minute. No account, no uploads — your data never leaves your browser.">
   <meta property="og:type" content="website">
+  <meta property="og:url" content="https://5yffb7vk7b-source.github.io/otterbill/">
+  <meta property="og:image" content="https://5yffb7vk7b-source.github.io/otterbill/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Otterbill — Free Invoice Generator, No Signup">
+  <meta name="twitter:description" content="Make a professional PDF invoice in under a minute. No account, no uploads — your data never leaves your browser.">
+  <meta name="twitter:image" content="https://5yffb7vk7b-source.github.io/otterbill/og.png">
+  <link rel="canonical" href="https://5yffb7vk7b-source.github.io/otterbill/">
   <meta name="theme-color" content="#0f172a">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A6%A6%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="css/style.css">
@@ -20,6 +27,22 @@
     "operatingSystem": "Any",
     "description": "Free in-browser invoice generator. No signup, no uploads — data never leaves your device.",
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      { "@type": "Question", "name": "Is Otterbill really free?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes — unlimited invoices, all features, PDF download. An optional one-time $9 Pro unlock removes the small credit line from PDFs and adds custom accent colors." } },
+      { "@type": "Question", "name": "Where does my invoice data go?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Nowhere. Otterbill has no backend and makes no network requests with your data; everything is stored in your own browser's local storage." } },
+      { "@type": "Question", "name": "How do I download the PDF?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Click Download PDF and choose 'Save as PDF' in your browser's print dialog. Works on every OS with no plugins." } },
+      { "@type": "Question", "name": "Can I manage multiple invoices?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes — every invoice you create is saved locally in your browser and listed in the sidebar, so you can reopen, edit, or delete them any time." } }
+    ]
   }
   </script>
 </head>
@@ -62,12 +85,21 @@
       <label for="discount">Discount %</label>
       <input type="number" id="discount" min="0" max="100" step="0.01" placeholder="0">
     </div>
+    <div class="control-group accent-group">
+      <label for="accent-color">Accent color <span class="pro-tag">✨ Pro</span></label>
+      <input type="color" id="accent-color" value="#0d9488">
+    </div>
     <div class="control-actions">
       <button class="btn btn-primary btn-block" id="btn-download">⬇ Download PDF</button>
+      <p class="pdf-hint">Pick “Save as PDF” in the dialog</p>
       <button class="btn btn-ghost btn-block" id="btn-new">＋ New invoice</button>
       <button class="btn btn-ghost btn-block btn-danger" id="btn-clear">🗑 Clear everything</button>
     </div>
     <p class="save-note" id="save-note">Saved locally ✓</p>
+    <div class="inv-section">
+      <div class="inv-title">Your invoices</div>
+      <div id="inv-list"></div>
+    </div>
   </aside>
 
   <div class="sheet-wrap">
@@ -160,8 +192,13 @@
   </details>
   <details>
     <summary>Can I use my own logo and currency?</summary>
-    <p>Yes — upload any image as your logo (it stays on your device) and pick from 25+ currencies with correct
+    <p>Yes — upload any image as your logo (it stays on your device) and pick from 26 currencies with correct
     formatting.</p>
+  </details>
+  <details>
+    <summary>Can I manage more than one invoice?</summary>
+    <p>Yes. Every invoice you create is kept in <strong>Your invoices</strong> in the sidebar (stored in your
+    browser, like everything else). Reopen, edit, duplicate via “New invoice”, or delete them any time.</p>
   </details>
 </section>
 
@@ -178,7 +215,7 @@
       <p class="pro-price"><strong>$9</strong> one-time · lifetime · no subscription</p>
       <ul class="pro-list">
         <li>Removes the “Created with Otterbill” line from your PDFs</li>
-        <li>Supports independent development</li>
+        <li>Custom accent color for your invoices</li>
         <li>All future Pro features included forever</li>
       </ul>
       <a class="btn btn-primary btn-block" id="btn-buy" href="#" target="_blank" rel="noopener">Get Pro — $9</a>

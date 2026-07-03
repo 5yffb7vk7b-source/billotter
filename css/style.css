@@ -90,11 +90,43 @@ a { color: inherit; }
 }
 .control-actions { display: grid; gap: .55rem; margin-top: .3rem; }
 .save-note { font-size: .78rem; color: #64748b; text-align: center; margin: 0; }
+.pdf-hint { font-size: .74rem; color: #64748b; text-align: center; margin: -.2rem 0 0; }
+.pro-tag { font-size: .68rem; color: #fbbf24; }
+.accent-group input[type=color] {
+  padding: .15rem; height: 2.2rem; cursor: pointer;
+}
+.accent-group.locked input[type=color] { opacity: .55; }
+
+.inv-section { border-top: 1px solid rgba(148,163,184,.15); padding-top: .8rem; }
+.inv-title {
+  font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: #94a3b8; margin-bottom: .5rem;
+}
+.inv-empty { font-size: .78rem; color: #64748b; margin: 0; }
+.inv-item { display: flex; align-items: stretch; gap: .3rem; margin-bottom: .35rem; }
+.inv-item.current .inv-open { border-color: var(--accent); }
+.inv-open {
+  flex: 1; min-width: 0; font: inherit; cursor: pointer; text-align: left;
+  display: grid; grid-template-columns: auto 1fr auto; gap: .5rem; align-items: baseline;
+  background: var(--bg); color: #cbd5e1;
+  border: 1px solid rgba(148,163,184,.25); border-radius: 8px; padding: .4rem .55rem;
+  font-size: .78rem;
+}
+.inv-open:hover { border-color: #94a3b8; }
+.inv-num { font-weight: 600; white-space: nowrap; }
+.inv-client { color: #94a3b8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inv-total { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.inv-del {
+  font: inherit; font-size: .8rem; cursor: pointer; border: 0; border-radius: 8px;
+  background: none; color: #64748b; padding: 0 .4rem;
+}
+.inv-del:hover { color: #fca5a5; background: rgba(220, 38, 38, .12); }
 
 /* ---------- the invoice sheet ---------- */
 .sheet-wrap { min-width: 0; overflow-x: auto; }
 @media (max-width: 640px) { .sheet { min-width: 560px; } }
 .sheet {
+  --sheet-accent: #0d9488;
   background: var(--paper); color: var(--ink);
   border-radius: 6px; box-shadow: 0 10px 40px rgba(0,0,0,.45);
   padding: clamp(1.2rem, 4vw, 3rem);
@@ -106,7 +138,7 @@ a { color: inherit; }
   width: 100%; resize: vertical; overflow: hidden;
 }
 .sheet input:hover, .sheet textarea:hover { border-color: var(--line); }
-.sheet input:focus, .sheet textarea:focus { outline: none; border-color: var(--accent); background: #f0fdfa; }
+.sheet input:focus, .sheet textarea:focus { outline: none; border-color: var(--sheet-accent); background: #f8fafc; }
 .sheet ::placeholder { color: #94a3b8; }
 
 .sheet-head { display: flex; justify-content: space-between; gap: 1.5rem; margin-bottom: 2rem; }
@@ -130,8 +162,9 @@ a { color: inherit; }
 @media (max-width: 560px) { .parties { grid-template-columns: 1fr; } }
 .party-label {
   font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
-  color: var(--accent-dark); margin-bottom: .35rem;
+  color: var(--sheet-accent); margin-bottom: .35rem;
 }
+.doc-title { color: var(--sheet-accent); }
 
 /* items table */
 .items { width: 100%; border-collapse: collapse; margin-bottom: .4rem; }
@@ -227,5 +260,8 @@ body.pro .sheet-footer { display: none; }
   .sheet input, .sheet textarea { border-color: transparent !important; background: transparent !important; }
   .sheet textarea { resize: none; overflow: hidden; }
   .totals-due { background: #f0fdfa; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .items thead { display: table-header-group; }
+  .items tr, .totals, .notes-grid, .sheet-footer { break-inside: avoid; }
+  .party-label, .doc-title { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   input::placeholder, textarea::placeholder { color: transparent !important; }
 }

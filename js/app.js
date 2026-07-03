@@ -8,7 +8,9 @@
   const UNLOCK_HASH = "7b4b6a2a5e54e7f9d475d45fcb631bdb38b4c243145b7c650dd388fd958155ff";
 
   const STORE_KEY = "otterbill.invoice.v1";
+  const LIST_KEY = "otterbill.invoices.v1";
   const PRO_KEY = "otterbill.pro";
+  const DEFAULT_ACCENT = "#0d9488";
 
   const CURRENCIES = [
     "USD","EUR","GBP","CAD","AUD","NZD","CHF","JPY","CNY","INR","SGD","HKD",
@@ -18,24 +20,30 @@
   const $ = (id) => document.getElementById(id);
   const els = {
     currency: $("currency"), taxRate: $("tax-rate"), discount: $("discount"),
+    accent: $("accent-color"),
     number: $("inv-number"), date: $("inv-date"), due: $("inv-due"),
     from: $("from"), to: $("to"), notes: $("notes"), terms: $("terms"),
     itemsBody: $("items-body"), amountPaid: $("amount-paid"),
     logoImg: $("logo-img"), logoFile: $("logo-file"),
     btnLogo: $("btn-logo"), btnLogoRemove: $("btn-logo-remove"),
-    saveNote: $("save-note"),
+    saveNote: $("save-note"), invList: $("inv-list"),
   };
 
+  const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
   const defaultState = () => ({
+    id: newId(),
     number: "INV-0001", date: todayISO(), due: "",
     from: "", to: "", notes: "", terms: "",
     currency: guessCurrency(), taxRate: "", discount: "", amountPaid: "",
+    accent: DEFAULT_ACCENT,
     logo: "", items: [{ desc: "", qty: "1", rate: "" }],
   });
 
-  let state = load();
-
-  function todayISO() { return new Date().toISOString().slice(0, 10); }
+  function todayISO() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }
 
   function guessCurrency() {
     try {
@@ -48,16 +56,49 @@
     } catch { return "USD"; }
   }
 
+  function normalize(raw) {
+    const s = { ...defaultState(), ...raw };
+    if (!s.id) s.id = newId();
+    if (!Array.isArray(s.items) || s.items.length === 0) s.items = [{ desc: "", qty: "1", rate: "" }];
+    s.items = s.items.map((it) => ({ desc: String(it.desc ?? ""), qty: String(it.qty ?? ""), rate: String(it.rate ?? "") }));
+    if (!CURRENCIES.includes(s.currency)) s.currency = "USD";
+    if (!/^#[0-9a-fA-F]{6}$/.test(s.accent)) s.accent = DEFAULT_ACCENT;
+    return s;
+  }
+
   function load() {
     try {
       const raw = localStorage.getItem(STORE_KEY);
-      if (raw) {
-        const s = { ...defaultState(), ...JSON.parse(raw) };
-        if (!Array.isArray(s.items) || s.items.length === 0) s.items = defaultState().items;
-        return s;
-      }
+      if (raw) return normalize(JSON.parse(raw));
     } catch { /* corrupted storage — start fresh */ }
     return defaultState();
+  }
+
+  function loadList() {
+    try {
+      const raw = localStorage.getItem(LIST_KEY);
+      if (raw) {
+        const list = JSON.parse(raw);
+        if (Array.isArray(list)) return list.map(normalize);
+      }
+    } catch { /* corrupted list — start fresh */ }
+    return [];
+  }
+
+  let state = load();
+  let invoices = loadList();
+
+  // An invoice is only worth keeping in the list once it says something.
+  // "from" doesn't count: it carries over to new invoices, which start empty.
+  const hasContent = (s) =>
+    Boolean(s.to.trim() || s.items.some((it) => it.desc.trim() || num(it.rate)));
+
+  function upsertCurrent() {
+    if (!hasContent(state)) return;
+    const copy = JSON.parse(JSON.stringify(state));
+    const i = invoices.findIndex((inv) => inv.id === state.id);
+    if (i >= 0) invoices[i] = copy; else invoices.unshift(copy);
+    if (invoices.length > 50) invoices.length = 50;
   }
 
   let saveTimer;
@@ -65,24 +106,27 @@
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
       try {
+        upsertCurrent();
         localStorage.setItem(STORE_KEY, JSON.stringify(state));
+        localStorage.setItem(LIST_KEY, JSON.stringify(invoices));
         els.saveNote.textContent = "Saved locally ✓";
       } catch {
         els.saveNote.textContent = "Couldn't save (storage full?)";
       }
-    }, 300);
+      renderList();
+    }, 250);
   }
 
   // ---------- money ----------
   const fmt = () => new Intl.NumberFormat(undefined, { style: "currency", currency: state.currency });
   const num = (v) => { const n = parseFloat(v); return Number.isFinite(n) ? n : 0; };
 
-  function totals() {
-    const subtotal = state.items.reduce((sum, it) => sum + num(it.qty) * num(it.rate), 0);
-    const discount = subtotal * num(state.discount) / 100;
-    const taxed = (subtotal - discount) * num(state.taxRate) / 100;
+  function totals(s = state) {
+    const subtotal = s.items.reduce((sum, it) => sum + num(it.qty) * num(it.rate), 0);
+    const discount = subtotal * num(s.discount) / 100;
+    const taxed = (subtotal - discount) * num(s.taxRate) / 100;
     const total = subtotal - discount + taxed;
-    return { subtotal, discount, taxed, total, due: total - num(state.amountPaid) };
+    return { subtotal, discount, taxed, total, due: total - num(s.amountPaid) };
   }
 
   function renderTotals() {
@@ -99,29 +143,43 @@
   }
 
   // ---------- line items ----------
+  function addItem(focus) {
+    state.items.push({ desc: "", qty: "1", rate: "" });
+    renderItems();
+    if (focus) {
+      const rows = els.itemsBody.querySelectorAll("tr");
+      rows[rows.length - 1]?.querySelector("input")?.focus();
+    }
+    save();
+  }
+
   function renderItems() {
     els.itemsBody.textContent = "";
     state.items.forEach((item, i) => {
       const tr = document.createElement("tr");
+      const isLast = () => i === state.items.length - 1;
+
+      const mkInput = (props) => {
+        const el = document.createElement("input");
+        Object.assign(el, props);
+        el.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" && isLast()) { e.preventDefault(); addItem(true); }
+        });
+        return el;
+      };
 
       const tdDesc = document.createElement("td");
-      const desc = document.createElement("input");
-      desc.placeholder = "Description of work or product";
-      desc.value = item.desc;
+      const desc = mkInput({ placeholder: "Description of work or product", value: item.desc, ariaLabel: `Line ${i + 1} description` });
       desc.addEventListener("input", () => { item.desc = desc.value; save(); });
       tdDesc.appendChild(desc);
 
       const tdQty = document.createElement("td");
-      const qty = document.createElement("input");
-      qty.type = "number"; qty.min = "0"; qty.step = "any"; qty.placeholder = "1";
-      qty.value = item.qty;
+      const qty = mkInput({ type: "number", min: "0", step: "any", placeholder: "1", value: item.qty, ariaLabel: `Line ${i + 1} quantity` });
       qty.addEventListener("input", () => { item.qty = qty.value; updateRow(); });
       tdQty.appendChild(qty);
 
       const tdRate = document.createElement("td");
-      const rate = document.createElement("input");
-      rate.type = "number"; rate.min = "0"; rate.step = "any"; rate.placeholder = "0.00";
-      rate.value = item.rate;
+      const rate = mkInput({ type: "number", min: "0", step: "any", placeholder: "0.00", value: item.rate, ariaLabel: `Line ${i + 1} rate` });
       rate.addEventListener("input", () => { item.rate = rate.value; updateRow(); });
       tdRate.appendChild(rate);
 
@@ -132,6 +190,7 @@
       tdX.className = "no-print";
       const x = document.createElement("button");
       x.className = "row-remove"; x.textContent = "✕"; x.title = "Remove line";
+      x.setAttribute("aria-label", `Remove line ${i + 1}`);
       x.addEventListener("click", () => {
         state.items.splice(i, 1);
         if (state.items.length === 0) state.items.push({ desc: "", qty: "1", rate: "" });
@@ -147,6 +206,52 @@
 
       tr.append(tdDesc, tdQty, tdRate, tdAmount, tdX);
       els.itemsBody.appendChild(tr);
+    });
+  }
+
+  // ---------- saved invoices ----------
+  function renderList() {
+    if (!els.invList) return;
+    els.invList.textContent = "";
+    if (invoices.length === 0) {
+      const p = document.createElement("p");
+      p.className = "inv-empty";
+      p.textContent = "Invoices you create appear here.";
+      els.invList.appendChild(p);
+      return;
+    }
+    invoices.forEach((inv) => {
+      const row = document.createElement("div");
+      row.className = "inv-item" + (inv.id === state.id ? " current" : "");
+
+      const open = document.createElement("button");
+      open.className = "inv-open";
+      open.type = "button";
+      const client = (inv.to.split("\n")[0] || "—").trim() || "—";
+      const total = new Intl.NumberFormat(undefined, { style: "currency", currency: inv.currency }).format(totals(inv).total);
+      open.innerHTML = `<span class="inv-num"></span><span class="inv-client"></span><span class="inv-total"></span>`;
+      open.querySelector(".inv-num").textContent = inv.number || "—";
+      open.querySelector(".inv-client").textContent = client;
+      open.querySelector(".inv-total").textContent = total;
+      open.addEventListener("click", () => {
+        if (inv.id === state.id) return;
+        state = normalize(JSON.parse(JSON.stringify(inv)));
+        hydrate(); save();
+      });
+      row.appendChild(open);
+
+      if (inv.id !== state.id) {
+        const del = document.createElement("button");
+        del.className = "inv-del"; del.type = "button"; del.textContent = "✕";
+        del.setAttribute("aria-label", `Delete invoice ${inv.number}`);
+        del.addEventListener("click", () => {
+          invoices = invoices.filter((x) => x.id !== inv.id);
+          localStorage.setItem(LIST_KEY, JSON.stringify(invoices));
+          renderList();
+        });
+        row.appendChild(del);
+      }
+      els.invList.appendChild(row);
     });
   }
 
@@ -193,6 +298,23 @@
   });
   els.btnLogoRemove.addEventListener("click", () => { state.logo = ""; renderLogo(); save(); });
 
+  // ---------- accent color (Pro) ----------
+  function applyAccent() {
+    const sheet = $("sheet");
+    sheet.style.setProperty("--sheet-accent", state.accent);
+    els.accent.value = state.accent;
+  }
+
+  els.accent.addEventListener("input", () => {
+    if (!isPro()) {
+      els.accent.value = state.accent;
+      openModal();
+      return;
+    }
+    state.accent = els.accent.value;
+    applyAccent(); save();
+  });
+
   // ---------- toolbar actions ----------
   $("btn-download").addEventListener("click", () => window.print());
 
@@ -217,16 +339,32 @@
   });
 
   $("btn-new").addEventListener("click", () => {
-    const m = state.number.match(/^(.*?)(\d+)\s*$/);
-    const nextNumber = m ? m[1] + String(parseInt(m[2], 10) + 1).padStart(m[2].length, "0") : state.number;
-    state = { ...state, number: nextNumber, date: todayISO(), due: "",
-      to: "", notes: "", amountPaid: "", items: [{ desc: "", qty: "1", rate: "" }] };
+    upsertCurrent();
+    const numbers = [state.number, ...invoices.map((i) => i.number)];
+    const next = nextNumber(numbers);
+    state = { ...normalize(JSON.parse(JSON.stringify(state))), id: newId(), number: next,
+      date: todayISO(), due: "", to: "", notes: "", amountPaid: "",
+      items: [{ desc: "", qty: "1", rate: "" }] };
     hydrate(); save();
   });
 
+  // Highest trailing number across known invoices, plus one — avoids duplicates.
+  function nextNumber(numbers) {
+    let prefix = "INV-", best = 0, width = 4;
+    numbers.forEach((n) => {
+      const m = String(n || "").match(/^(.*?)(\d+)\s*$/);
+      if (m && parseInt(m[2], 10) >= best) {
+        best = parseInt(m[2], 10); prefix = m[1]; width = m[2].length;
+      }
+    });
+    return prefix + String(best + 1).padStart(width, "0");
+  }
+
   $("btn-clear").addEventListener("click", () => {
-    if (!confirm("Clear the invoice and everything saved locally?")) return;
+    if (!confirm("Clear this invoice AND delete all locally saved invoices?")) return;
     localStorage.removeItem(STORE_KEY);
+    localStorage.removeItem(LIST_KEY);
+    invoices = [];
     state = defaultState();
     hydrate(); save();
   });
@@ -234,6 +372,7 @@
   // ---------- Pro ----------
   const modal = $("pro-modal");
   const isPro = () => localStorage.getItem(PRO_KEY) === "1";
+  const openModal = () => { modal.hidden = false; };
 
   function renderPro() {
     document.body.classList.toggle("pro", isPro());
@@ -244,9 +383,10 @@
     buy.hidden = !configured;
     $("buy-unavailable").hidden = configured;
     if (configured) buy.href = PAYMENT_LINK;
+    els.accent.closest(".control-group").classList.toggle("locked", !isPro());
   }
 
-  $("btn-open-pro").addEventListener("click", () => { modal.hidden = false; });
+  $("btn-open-pro").addEventListener("click", openModal);
   $("btn-close-pro").addEventListener("click", () => { modal.hidden = true; });
   modal.addEventListener("click", (e) => { if (e.target === modal) modal.hidden = true; });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") modal.hidden = true; });
@@ -265,7 +405,8 @@
       if (await sha256hex(code) === UNLOCK_HASH) {
         localStorage.setItem(PRO_KEY, "1");
         renderPro();
-        msg.textContent = "";
+        msg.textContent = "Unlocked — thank you! 🦦";
+        msg.className = "pro-hint ok";
       } else {
         msg.textContent = "That code doesn't look right — it's on your Stripe receipt page.";
         msg.className = "pro-hint err";
@@ -297,16 +438,15 @@
     bind(els.terms, "terms");
     bind(els.amountPaid, "amountPaid", renderTotals);
     document.querySelectorAll(".sheet textarea").forEach(autogrow);
+    applyAccent();
     renderLogo();
     renderItems();
     renderTotals();
     renderPro();
+    renderList();
   }
 
-  $("btn-add-item").addEventListener("click", () => {
-    state.items.push({ desc: "", qty: "1", rate: "" });
-    renderItems(); save();
-  });
+  $("btn-add-item").addEventListener("click", () => addItem(true));
 
   hydrate();
 })();
