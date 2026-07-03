@@ -17,6 +17,87 @@
     "SEK","NOK","DKK","PLN","CZK","RON","HUF","BRL","MXN","ZAR","AED","TRY","ILS","KRW"
   ];
 
+  // Prefills for the SEO landing pages (templates/<slug>/ links here with ?template=<slug>).
+  // Keep in sync with scripts/gen-templates.mjs — it emits scripts/templates-map.json to diff against.
+  const TEMPLATES = {
+    "photography": {
+      items: [
+        { desc: "Photography session — [event / portrait / product] (hours)", qty: "4", rate: "" },
+        { desc: "Photo editing & retouching (per edited image)", qty: "25", rate: "" },
+        { desc: "Online gallery — hosting & digital delivery", qty: "1", rate: "" },
+        { desc: "Travel & mileage", qty: "1", rate: "" },
+      ],
+      notes: "Edited high-resolution images delivered via private online gallery within 14 days.",
+      terms: "50% retainer due at booking; balance due before final delivery. Images licensed for personal use — commercial licensing available on request.",
+    },
+    "graphic-design": {
+      items: [
+        { desc: "Logo design — 3 concepts, 2 revision rounds", qty: "1", rate: "" },
+        { desc: "Brand style guide (colors, typography, usage)", qty: "1", rate: "" },
+        { desc: "Business card & letterhead design", qty: "1", rate: "" },
+        { desc: "Additional revisions beyond included rounds (hourly)", qty: "2", rate: "" },
+      ],
+      notes: "Final files delivered as AI, SVG, PNG and PDF on receipt of payment.",
+      terms: "50% due upfront, 50% on delivery. Two revision rounds included; further revisions billed at the hourly rate above. Full usage rights transfer on final payment.",
+    },
+    "web-development": {
+      items: [
+        { desc: "Development — [feature / project phase] (hours)", qty: "20", rate: "" },
+        { desc: "Responsive design & cross-browser testing", qty: "1", rate: "" },
+        { desc: "Deployment & launch support", qty: "1", rate: "" },
+        { desc: "Post-launch bug-fix window (30 days)", qty: "1", rate: "" },
+      ],
+      notes: "Source code delivered via private Git repository on payment.",
+      terms: "Payment due within 14 days of invoice date. Work on subsequent milestones begins once payment clears.",
+    },
+    "writing": {
+      items: [
+        { desc: "Blog article — research, writing, 1 revision round (per word)", qty: "1500", rate: "" },
+        { desc: "SEO meta title & description", qty: "1", rate: "" },
+        { desc: "Content brief & keyword research", qty: "1", rate: "" },
+      ],
+      notes: "One revision round included per article; further revisions billed separately.",
+      terms: "Payment due within 14 days. A 50% kill fee applies to commissioned work cancelled after drafting begins.",
+    },
+    "consulting": {
+      items: [
+        { desc: "Strategy consulting — [engagement / phase] (hours)", qty: "10", rate: "" },
+        { desc: "Discovery workshop & stakeholder interviews", qty: "1", rate: "" },
+        { desc: "Written recommendations report", qty: "1", rate: "" },
+      ],
+      notes: "Summary of findings and recommended next steps delivered separately.",
+      terms: "Net 15. Late payments accrue 1.5% monthly interest. Work beyond the agreed scope is quoted separately.",
+    },
+    "tutoring": {
+      items: [
+        { desc: "Tutoring session — 60 minutes", qty: "4", rate: "" },
+        { desc: "Custom study materials & practice sets", qty: "1", rate: "" },
+        { desc: "Progress report & parent consultation", qty: "1", rate: "" },
+      ],
+      notes: "Sessions covered by this invoice: [dates].",
+      terms: "Payment due before the first session of the month. Sessions cancelled with less than 24 hours' notice are billed in full.",
+    },
+    "videography": {
+      items: [
+        { desc: "Filming day rate — crew of one, camera & audio", qty: "1", rate: "" },
+        { desc: "Video editing & color grading (hours)", qty: "8", rate: "" },
+        { desc: "Licensed music & stock footage (pass-through)", qty: "1", rate: "" },
+        { desc: "Final delivery — 4K master + social cuts", qty: "1", rate: "" },
+      ],
+      notes: "Two revision rounds included on the edit; further rounds billed hourly.",
+      terms: "50% deposit reserves the shoot date; balance due on delivery of final files. Raw footage available for an additional fee.",
+    },
+    "cleaning": {
+      items: [
+        { desc: "Standard home cleaning — 3 bed / 2 bath", qty: "1", rate: "" },
+        { desc: "Deep-clean add-on — oven, fridge & baseboards", qty: "1", rate: "" },
+        { desc: "Cleaning supplies & materials", qty: "1", rate: "" },
+      ],
+      notes: "Service address: [address]. Date of service: [date].",
+      terms: "Payment due on the day of service. Cancellations with less than 48 hours' notice incur a 50% fee.",
+    },
+  };
+
   const $ = (id) => document.getElementById(id);
   const els = {
     currency: $("currency"), taxRate: $("tax-rate"), discount: $("discount"),
@@ -417,6 +498,27 @@
     }
   });
 
+  // ---------- URL templates (?template=<slug> from the SEO landing pages) ----------
+  function applyUrlTemplate() {
+    let slug = null;
+    try { slug = new URLSearchParams(location.search).get("template"); } catch { return false; }
+    const t = slug && TEMPLATES[slug.toLowerCase()];
+    if (!t) return false;
+    if (hasContent(state)) {
+      // Don't clobber work in progress — branch into a fresh invoice, like "New invoice".
+      upsertCurrent();
+      state = { ...normalize(JSON.parse(JSON.stringify(state))), id: newId(),
+        number: nextNumber([state.number, ...invoices.map((i) => i.number)]),
+        date: todayISO(), due: "", to: "", amountPaid: "" };
+    }
+    state.items = t.items.map((it) => ({ ...it }));
+    state.notes = t.notes;
+    state.terms = t.terms;
+    // Strip the param so refresh/bookmark doesn't re-apply the template.
+    try { history.replaceState(null, "", location.pathname + location.hash); } catch { /* file:// etc. */ }
+    return true;
+  }
+
   // ---------- init ----------
   function hydrate() {
     CURRENCIES.forEach((c) => {
@@ -448,5 +550,6 @@
 
   $("btn-add-item").addEventListener("click", () => addItem(true));
 
+  if (applyUrlTemplate()) save();
   hydrate();
 })();
