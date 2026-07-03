@@ -2,7 +2,7 @@
 
 **Free invoice generator that runs entirely in your browser.** No signup, no uploads, no backend — your data never leaves your device.
 
-**Live app → https://otterbill.com/**
+**Live app → https://5yffb7vk7b-source.github.io/otterbill/**
 
 ## Features
 
