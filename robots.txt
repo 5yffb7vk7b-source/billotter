@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://5yffb7vk7b-source.github.io/otterbill/sitemap.xml
+Sitemap: https://otterbill.com/sitemap.xml
