@@ -2,9 +2,9 @@
 (() => {
   "use strict";
 
-  // Set this to your Stripe Payment Link to enable Pro purchases.
-  const PAYMENT_LINK = "REPLACE_WITH_STRIPE_PAYMENT_LINK";
-  // SHA-256 of the Pro unlock code shown on the Stripe receipt page.
+  // Where "Get Pro" sends buyers (Ko-fi shop item).
+  const PAYMENT_LINK = "https://ko-fi.com/s/1765e9aa86";
+  // SHA-256 of the Pro unlock code delivered after purchase.
   const UNLOCK_HASH = "7b4b6a2a5e54e7f9d475d45fcb631bdb38b4c243145b7c650dd388fd958155ff";
 
   const STORE_KEY = "otterbill.invoice.v1";
