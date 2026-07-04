@@ -17,6 +17,14 @@ export default async function handler(req, res) {
   }
   if (!data) return res.status(400).json({ error: "no data" });
 
+  // Ops marker: proves Ko-fi reached us with the right secret, even for skipped events.
+  await writeJson("meta/last-webhook.json", {
+    at: new Date().toISOString(),
+    type: data.type || null,
+    amount: data.amount || null,
+    tx: data.kofi_transaction_id || null,
+  });
+
   const email = String(data.email || "").toLowerCase().trim();
   if (!email) return res.status(200).json({ ok: true, skipped: "no email" });
 
