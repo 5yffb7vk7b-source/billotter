@@ -186,5 +186,213 @@
     ],
     "notes": "Service address: [address]. Date of service: [date].",
     "terms": "Payment due on the day of service. Cancellations with less than 48 hours' notice incur a 50% fee."
+  },
+  "plumbing": {
+    "items": [
+      {
+        "desc": "Service call — diagnosis & estimate",
+        "qty": "1",
+        "rate": ""
+      },
+      {
+        "desc": "Labor — [repair / installation] (hours)",
+        "qty": "2",
+        "rate": ""
+      },
+      {
+        "desc": "Parts & materials — [valve / heater / fittings]",
+        "qty": "1",
+        "rate": ""
+      },
+      {
+        "desc": "After-hours emergency surcharge",
+        "qty": "1",
+        "rate": ""
+      }
+    ],
+    "notes": "Service address: [address]. Licensed & insured — license #[number]. Labor warrantied for 90 days.",
+    "terms": "Payment due on completion. Parts carry the manufacturer's warranty; labor warrantied 90 days from service date."
+  },
+  "electrician": {
+    "items": [
+      {
+        "desc": "Troubleshooting & diagnosis (hours)",
+        "qty": "1",
+        "rate": ""
+      },
+      {
+        "desc": "Installation labor — [panel / fixtures / circuit] (hours)",
+        "qty": "3",
+        "rate": ""
+      },
+      {
+        "desc": "Materials — [wire / breakers / fixtures]",
+        "qty": "1",
+        "rate": ""
+      },
+      {
+        "desc": "Permit & inspection fee",
+        "qty": "1",
+        "rate": ""
+      }
+    ],
+    "notes": "Work performed to NEC and local code. Licensed & insured — license #[number].",
+    "terms": "Payment due on completion for service work; Net 15 on contractor accounts. Labor warrantied 12 months from service date."
+  },
+  "landscaping": {
+    "items": [
+      {
+        "desc": "Lawn maintenance — mow, edge, blow (per visit)",
+        "qty": "4",
+        "rate": ""
+      },
+      {
+        "desc": "Seasonal cleanup — beds, leaves & pruning",
+        "qty": "1",
+        "rate": ""
+      },
+      {
+        "desc": "Mulch — delivered & installed (cu yd)",
+        "qty": "5",
+        "rate": ""
+      },
+      {
+        "desc": "Green waste haul-away & disposal",
+        "qty": "1",
+        "rate": ""
+      }
+    ],
+    "notes": "Service address: [address]. Service period: [month]. Weather-delayed visits roll to the next scheduled day.",
+    "terms": "Recurring maintenance invoiced monthly, due within 7 days. Projects over [amount] require a 50% materials deposit before scheduling."
+  },
+  "handyman": {
+    "items": [
+      {
+        "desc": "Labor — [task 1: e.g. interior door repair] (hours)",
+        "qty": "1",
+        "rate": ""
+      },
+      {
+        "desc": "Labor — [task 2: e.g. ceiling fan replacement] (hours)",
+        "qty": "1.5",
+        "rate": ""
+      },
+      {
+        "desc": "Materials & supplies (receipts available)",
+        "qty": "1",
+        "rate": ""
+      },
+      {
+        "desc": "Materials pickup & delivery",
+        "qty": "1",
+        "rate": ""
+      }
+    ],
+    "notes": "Service address: [address]. Additional tasks quoted and approved on site before work began.",
+    "terms": "Payment due on completion. Two-hour minimum applies to all service visits."
+  },
+  "auto-repair": {
+    "items": [
+      {
+        "desc": "Diagnostics — scan, inspection & road test",
+        "qty": "1",
+        "rate": ""
+      },
+      {
+        "desc": "Labor — [repair performed] (hours)",
+        "qty": "2.4",
+        "rate": ""
+      },
+      {
+        "desc": "Parts — [part name, OEM / aftermarket]",
+        "qty": "1",
+        "rate": ""
+      },
+      {
+        "desc": "Shop supplies & fluid disposal",
+        "qty": "1",
+        "rate": ""
+      }
+    ],
+    "notes": "Vehicle: [year make model] — plate [number], [mileage] mi. Work authorized by customer on [date].",
+    "terms": "Payment due on vehicle pickup. Parts & labor warrantied 12 months / 12,000 miles, whichever comes first."
+  },
+  "catering": {
+    "items": [
+      {
+        "desc": "Catering menu — [buffet / plated] (per guest)",
+        "qty": "85",
+        "rate": ""
+      },
+      {
+        "desc": "Service staff — [servers / bartender] (hours)",
+        "qty": "12",
+        "rate": ""
+      },
+      {
+        "desc": "Rentals — linens, glassware & serviceware",
+        "qty": "1",
+        "rate": ""
+      },
+      {
+        "desc": "Delivery, setup & breakdown",
+        "qty": "1",
+        "rate": ""
+      }
+    ],
+    "notes": "Event: [date, venue]. Final guest count of [number] confirmed [date]. Deposit of [amount] received [date] — balance shown below.",
+    "terms": "50% deposit reserves the event date. Final guest count due 7 days before the event; invoiced count is the greater of guaranteed and actual. Balance due on or before event day."
+  },
+  "personal-training": {
+    "items": [
+      {
+        "desc": "1-on-1 training — 10-session pack",
+        "qty": "1",
+        "rate": ""
+      },
+      {
+        "desc": "Initial assessment & movement screen",
+        "qty": "1",
+        "rate": ""
+      },
+      {
+        "desc": "Program design & monthly check-in (online)",
+        "qty": "1",
+        "rate": ""
+      },
+      {
+        "desc": "Late cancellation — [date] (per policy)",
+        "qty": "1",
+        "rate": ""
+      }
+    ],
+    "notes": "Pack valid for 12 weeks from first session. Sessions: [gym / online]. Progress check scheduled at session 10.",
+    "terms": "Packages payable in full before the first session. Cancellations with less than 24 hours' notice count as a completed session."
+  },
+  "painting": {
+    "items": [
+      {
+        "desc": "Surface prep — patch, sand, caulk & mask",
+        "qty": "1",
+        "rate": ""
+      },
+      {
+        "desc": "Interior painting — [rooms / area], 2 coats",
+        "qty": "3",
+        "rate": ""
+      },
+      {
+        "desc": "Trim, doors & ceilings",
+        "qty": "1",
+        "rate": ""
+      },
+      {
+        "desc": "Paint & materials — [brand, sheen] (gallons)",
+        "qty": "6",
+        "rate": ""
+      }
+    ],
+    "notes": "Colors: [names/codes]. Two coats throughout; touch-up walkthrough completed [date]. Leftover paint labeled and left with client.",
+    "terms": "One-third deposit to schedule; balance due on completion after final walkthrough. Workmanship warrantied for 2 years."
   }
 }
