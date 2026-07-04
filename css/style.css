@@ -515,3 +515,58 @@ h2 { font-family: var(--display); font-weight: 550; letter-spacing: -.005em; }
   input::placeholder, textarea::placeholder { color: transparent !important; }
   .sheet input[type=date]::-webkit-calendar-picker-indicator { display: none; }
 }
+
+/* ---------- client book ---------- */
+.client-tools { float: right; }
+.client-tools .linklike { font-size: .72rem; color: #94a3b8; }
+.client-tools .linklike:hover { color: var(--accent-dark); }
+.client-row { display: flex; gap: .4rem; align-items: center; margin-bottom: .4rem; }
+.client-row select {
+  flex: 1; font: inherit; font-size: .84rem; color: var(--ink-soft);
+  background: #f8fafc; border: 1px solid var(--line); border-radius: 6px; padding: .3rem .4rem;
+}
+.client-forget {
+  font: inherit; cursor: pointer; border: 0; background: none;
+  color: #cbd5e1; font-size: .95rem; padding: .2rem .4rem; border-radius: 6px;
+}
+.client-forget:hover { color: var(--danger); background: #fef2f2; }
+
+/* ---------- item library ---------- */
+.add-row { display: flex; gap: .6rem; align-items: center; margin: .3rem 0 1.6rem; flex-wrap: wrap; }
+.add-row .add-item { margin: 0; }
+.lib-pick {
+  font: inherit; font-size: .84rem; color: var(--ink-soft); max-width: 340px;
+  background: #f8fafc; border: 1px solid var(--line); border-radius: 6px; padding: .35rem .4rem;
+}
+.row-save {
+  font: inherit; cursor: pointer; border: 0; background: none;
+  color: #cbd5e1; font-size: .95rem; padding: .2rem .3rem; border-radius: 6px;
+}
+.row-save:hover { color: var(--gold); background: #fffbeb; }
+
+/* ---------- pay-by-QR ---------- */
+.pay-block { display: flex; gap: .9rem; align-items: center; margin-top: 1.6rem; }
+.pay-block img {
+  width: 86px; height: 86px; image-rendering: pixelated;
+  border: 1px solid var(--line); border-radius: 6px;
+}
+.pay-text a { color: var(--sheet-accent); text-decoration: none; font-size: .9rem; word-break: break-all; }
+.pay-group.locked input { opacity: .55; }
+.group-hint { font-size: .68rem; color: var(--muted, #94a3b8); margin-top: .25rem; }
+
+/* ---------- PAID stamp ---------- */
+.totals { position: relative; }
+.sheet.paid .totals::before {
+  content: "PAID";
+  position: absolute; left: -150px; top: 50%;
+  transform: translateY(-50%) rotate(-11deg);
+  font-weight: 800; font-size: 1.5rem; letter-spacing: .22em; padding: .12em .5em .12em .6em;
+  color: var(--sheet-accent); border: 3px solid var(--sheet-accent); border-radius: 10px;
+  opacity: .75; pointer-events: none;
+}
+
+@media print {
+  .pay-block { break-inside: avoid; }
+  .pay-block img { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .sheet.paid .totals::before { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

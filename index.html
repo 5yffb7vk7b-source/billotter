@@ -36,7 +36,7 @@
     "@type": "FAQPage",
     "mainEntity": [
       { "@type": "Question", "name": "Is Billotter really free?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Yes — unlimited invoices, all core features, PDF download, two themes. An optional one-time $9 Pro unlock removes the small credit line from PDFs and adds the Serif and Bold premium themes plus custom accent colors." } },
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes — unlimited invoices, all core features, PDF download, two themes. An optional one-time $9 Pro unlock adds the client book, an item library for your services and rates, a scannable pay-by-QR code on PDFs, premium themes, custom accent colors, and removes the small credit line from PDFs." } },
       { "@type": "Question", "name": "Can Billotter make estimates, quotes and receipts?",
         "acceptedAnswer": { "@type": "Answer", "text": "Yes — switch the document type in the sidebar and the sheet becomes an estimate, quote or receipt with matching labels. Numbering, totals and PDF download work the same." } },
       { "@type": "Question", "name": "Where does my invoice data go?",
@@ -125,6 +125,11 @@
       <label for="accent-color">Accent color <span class="pro-tag">Pro</span></label>
       <input type="color" id="accent-color" value="#0d9488">
     </div>
+    <div class="control-group pay-group">
+      <label for="pay-link">Payment link <span class="pro-tag">Pro</span></label>
+      <input type="text" id="pay-link" placeholder="paypal.me/you" autocomplete="off" spellcheck="false">
+      <p class="group-hint">Prints on the invoice as a scannable QR code</p>
+    </div>
     <div class="control-actions">
       <button class="btn btn-primary btn-block" id="btn-download">Download PDF</button>
       <p class="pdf-hint">Pick “Save as PDF” in the dialog</p>
@@ -168,7 +173,15 @@
           <textarea id="from" rows="4" placeholder="Your name or business&#10;Address&#10;Email / phone&#10;Tax / VAT ID"></textarea>
         </div>
         <div class="party">
-          <div class="party-label">Bill to</div>
+          <div class="party-label">Bill to
+            <span class="client-tools no-print">
+              <button class="linklike" id="btn-save-client" type="button" title="Save this client to refill invoices in one click">Save client</button>
+            </span>
+          </div>
+          <div class="client-row no-print" id="client-row" hidden>
+            <select id="client-pick" aria-label="Saved clients"></select>
+            <button class="client-forget" id="btn-forget-client" type="button" title="Remove this saved client" hidden>✕</button>
+          </div>
           <textarea id="to" rows="4" placeholder="Client name or business&#10;Address&#10;Email"></textarea>
         </div>
       </div>
@@ -185,7 +198,10 @@
         </thead>
         <tbody id="items-body"><!-- rows injected --></tbody>
       </table>
-      <button class="btn btn-ghost add-item no-print" id="btn-add-item">+ Add line item</button>
+      <div class="add-row no-print">
+        <button class="btn btn-ghost add-item" id="btn-add-item">+ Add line item</button>
+        <select id="lib-pick" class="lib-pick" aria-label="Insert from item library" hidden></select>
+      </div>
 
       <div class="totals">
         <div class="totals-row"><span>Subtotal</span><span id="t-subtotal">$0.00</span></div>
@@ -207,6 +223,14 @@
         <div>
           <div class="party-label">Terms</div>
           <textarea id="terms" rows="2" placeholder="Payment due within 14 days. Bank details: …"></textarea>
+        </div>
+      </div>
+
+      <div class="pay-block" id="pay-block" hidden>
+        <img id="pay-qr" width="86" height="86" alt="QR code — scan to pay online">
+        <div class="pay-text">
+          <div class="party-label">Pay online</div>
+          <a id="pay-link-a" href="" rel="noopener"></a>
         </div>
       </div>
 
@@ -254,8 +278,10 @@
   <details open>
     <summary>Is it really free?</summary>
     <p>Yes. The generator is fully free: unlimited invoices, all core features, PDF download, two themes. The only
-    paid thing is <strong>Pro</strong> — a one-time $9 that removes the small “Created with Billotter” line from your
-    PDFs and unlocks the Serif &amp; Bold premium themes plus custom accent colors. No subscription.</p>
+    paid thing is <strong>Pro</strong> — a one-time $9 that adds the <strong>client book</strong> (save clients, refill
+    an invoice in one click), an <strong>item library</strong> for your standard services and rates, a scannable
+    <strong>pay-by-QR</strong> code on your PDFs, premium themes and custom accent colors — and removes the small
+    “Created with Billotter” line. No subscription.</p>
   </details>
   <details>
     <summary>Can I make estimates, quotes or receipts?</summary>
@@ -298,9 +324,11 @@
       <h3 id="pro-title">Billotter Pro</h3>
       <p class="pro-price"><strong>$9</strong> one-time · lifetime · no subscription</p>
       <ul class="pro-list">
-        <li>Removes the “Created with Billotter” line from your PDFs</li>
-        <li>Premium invoice themes — <strong>Serif</strong> &amp; <strong>Bold</strong></li>
-        <li>Custom accent color for your invoices</li>
+        <li><strong>Client book</strong> — save clients, refill an invoice in one click</li>
+        <li><strong>Item library</strong> — your services &amp; rates, inserted instantly</li>
+        <li><strong>Pay-by-QR</strong> — your PayPal / Venmo link as a scannable code on every PDF</li>
+        <li>No “Created with Billotter” line on your PDFs</li>
+        <li>Premium themes (<strong>Serif</strong> &amp; <strong>Bold</strong>) + custom accent color</li>
         <li>All future Pro features included forever</li>
       </ul>
       <a class="btn btn-primary btn-block" id="btn-buy" href="#" target="_blank" rel="noopener">Get Pro — $9</a>
@@ -323,6 +351,7 @@
   </div>
 </div>
 
+<script src="js/qr.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

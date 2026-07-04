@@ -10,6 +10,10 @@
   const STORE_KEY = "billotter.invoice.v1";
   const LIST_KEY = "billotter.invoices.v1";
   const PRO_KEY = "billotter.pro";
+  const CLIENTS_KEY = "billotter.clients.v1";
+  const ITEMLIB_KEY = "billotter.itemlib.v1";
+  // Free taste of the Pro workflow features: one client, three saved items.
+  const FREE_CLIENTS = 1, FREE_LIB_ITEMS = 3;
   const DEFAULT_ACCENT = "#0d9488";
 
   // value = requires Pro
@@ -208,7 +212,7 @@
     from: "", to: "", notes: "", terms: "",
     currency: guessCurrency(), taxRate: "", discount: "", amountPaid: "",
     accent: DEFAULT_ACCENT, docType: "invoice", theme: "classic",
-    logo: "", items: [{ desc: "", qty: "1", rate: "" }],
+    logo: "", payLink: "", items: [{ desc: "", qty: "1", rate: "" }],
   });
 
   function todayISO() {
@@ -236,8 +240,21 @@
     if (!/^#[0-9a-fA-F]{6}$/.test(s.accent)) s.accent = DEFAULT_ACCENT;
     if (!(s.docType in DOC_TYPES)) s.docType = "invoice";
     if (!(s.theme in THEMES)) s.theme = "classic";
+    s.payLink = String(s.payLink ?? "");
     return s;
   }
+
+  function loadJsonList(key) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (raw) { const l = JSON.parse(raw); if (Array.isArray(l)) return l; }
+    } catch { /* corrupted — start fresh */ }
+    return [];
+  }
+  let clients = loadJsonList(CLIENTS_KEY).filter((c) => c && c.id && c.label && typeof c.to === "string");
+  let itemLib = loadJsonList(ITEMLIB_KEY).filter((x) => x && x.id && typeof x.desc === "string");
+  const saveClients = () => { try { localStorage.setItem(CLIENTS_KEY, JSON.stringify(clients)); } catch { /* full */ } };
+  const saveLib = () => { try { localStorage.setItem(ITEMLIB_KEY, JSON.stringify(itemLib)); } catch { /* full */ } };
 
   function load() {
     try {
@@ -313,6 +330,8 @@
     $("t-tax").textContent = f.format(t.taxed);
     $("t-total").textContent = f.format(t.total);
     $("t-due").textContent = f.format(t.due);
+    // Fully-settled invoices get the rubber stamp — receipts feel like receipts.
+    $("sheet").classList.toggle("paid", t.total > 0 && num(state.amountPaid) > 0 && t.due <= 0.005);
   }
 
   // ---------- line items ----------
@@ -378,7 +397,23 @@
         if (state.items.length === 0) state.items.push({ desc: "", qty: "1", rate: "" });
         renderItems(); renderTotals(); save();
       });
-      tdX.appendChild(x);
+
+      const star = document.createElement("button");
+      star.className = "row-save";
+      star.textContent = "★";
+      star.title = "Save to item library";
+      star.setAttribute("aria-label", `Save line ${i + 1} to item library`);
+      star.addEventListener("click", () => {
+        const d = item.desc.trim();
+        if (!d) { els.saveNote.textContent = "Give the line a description first."; return; }
+        const existing = itemLib.find((l) => l.desc.trim().toLowerCase() === d.toLowerCase());
+        if (!existing && itemLib.length >= FREE_LIB_ITEMS && !isPro()) { openModal(); return; }
+        if (existing) existing.rate = item.rate;
+        else itemLib.unshift({ id: newId(), desc: item.desc, rate: item.rate });
+        saveLib(); renderLib();
+        els.saveNote.textContent = existing ? "Library item updated ✓" : "Saved to item library ✓";
+      });
+      tdX.append(star, x);
 
       function updateRow() {
         tdAmount.textContent = fmt().format(num(item.qty) * num(item.rate));
@@ -568,7 +603,7 @@
   // ---------- backup (export / import) ----------
   $("btn-export").addEventListener("click", () => {
     upsertCurrent();
-    const payload = { app: "billotter", version: 1, exported: todayISO(), current: state, invoices };
+    const payload = { app: "billotter", version: 1, exported: todayISO(), current: state, invoices, clients, itemLib };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
@@ -592,6 +627,18 @@
         incoming.map(normalize).forEach((inv) => {
           if (inv.id !== state.id && !invoices.some((x) => x.id === inv.id)) { invoices.push(inv); added++; }
         });
+        if (Array.isArray(data.clients)) {
+          data.clients.forEach((c) => {
+            if (c && c.id && c.label && !clients.some((x) => x.id === c.id)) clients.push(c);
+          });
+          saveClients(); renderClients();
+        }
+        if (Array.isArray(data.itemLib)) {
+          data.itemLib.forEach((l) => {
+            if (l && l.id && l.desc && !itemLib.some((x) => x.id === l.id)) itemLib.push(l);
+          });
+          saveLib(); renderLib();
+        }
         // Restore the exported working copy too — but never over unsaved work.
         if (data.current && !hasContent(state)) {
           const cur = normalize(data.current);
@@ -628,6 +675,122 @@
     hydrate(); save();
   });
 
+  // ---------- client book ----------
+  const clientLabel = (to) => (to.split("\n")[0] || "").trim();
+
+  function renderClients() {
+    const row = $("client-row"), sel = $("client-pick");
+    row.hidden = clients.length === 0;
+    if (row.hidden) return;
+    sel.textContent = "";
+    sel.add(new Option(`Saved clients (${clients.length})…`, ""));
+    clients.forEach((c) => sel.add(new Option(c.label, c.id)));
+    // Preselect when the sheet already shows a saved client, so "forget" has a target.
+    const cur = clients.find((c) => c.to === state.to);
+    sel.value = cur ? cur.id : "";
+    $("btn-forget-client").hidden = !cur;
+  }
+
+  $("btn-save-client").addEventListener("click", () => {
+    const label = clientLabel(state.to);
+    if (!label) {
+      els.saveNote.textContent = "Fill in “Bill to” first — the first line becomes the client name.";
+      return;
+    }
+    const existing = clients.find((c) => c.label.toLowerCase() === label.toLowerCase());
+    if (!existing && clients.length >= FREE_CLIENTS && !isPro()) { openModal(); return; }
+    if (existing) existing.to = state.to;
+    else clients.unshift({ id: newId(), label, to: state.to });
+    saveClients(); renderClients();
+    els.saveNote.textContent = existing ? `Client “${label}” updated ✓` : `Client “${label}” saved ✓`;
+  });
+
+  $("client-pick").addEventListener("change", () => {
+    const c = clients.find((x) => x.id === $("client-pick").value);
+    $("btn-forget-client").hidden = !c;
+    if (!c) return;
+    state.to = c.to;
+    els.to.value = c.to;
+    autogrow(els.to);
+    save();
+  });
+
+  $("btn-forget-client").addEventListener("click", () => {
+    const id = $("client-pick").value;
+    if (!id) return;
+    clients = clients.filter((c) => c.id !== id);
+    saveClients(); renderClients();
+    els.saveNote.textContent = "Client removed ✓";
+  });
+
+  // ---------- item library ----------
+  function renderLib() {
+    const sel = $("lib-pick");
+    sel.hidden = itemLib.length === 0;
+    if (sel.hidden) return;
+    sel.textContent = "";
+    sel.add(new Option(`Item library (${itemLib.length})…`, ""));
+    itemLib.forEach((x) => {
+      const label = x.desc.length > 48 ? x.desc.slice(0, 48) + "…" : x.desc;
+      sel.add(new Option(num(x.rate) ? `${label} — ${x.rate}` : label, x.id));
+    });
+    sel.add(new Option("— remove last inserted item —", "__forget"));
+  }
+
+  let lastLibPick = null;
+  $("lib-pick").addEventListener("change", () => {
+    const val = $("lib-pick").value;
+    $("lib-pick").value = "";
+    if (val === "__forget") {
+      if (lastLibPick) {
+        itemLib = itemLib.filter((x) => x.id !== lastLibPick);
+        lastLibPick = null;
+        saveLib(); renderLib();
+        els.saveNote.textContent = "Library item removed ✓";
+      } else {
+        els.saveNote.textContent = "Insert an item first, then remove it here.";
+      }
+      return;
+    }
+    const x = itemLib.find((l) => l.id === val);
+    if (!x) return;
+    lastLibPick = x.id;
+    const last = state.items[state.items.length - 1];
+    if (last && !last.desc.trim() && !num(last.rate)) {
+      last.desc = x.desc; last.rate = x.rate; last.qty = last.qty || "1";
+    } else {
+      state.items.push({ desc: x.desc, qty: "1", rate: x.rate });
+    }
+    renderItems(); renderTotals(); save();
+  });
+
+  // ---------- pay-by-QR (Pro) ----------
+  function renderPay() {
+    const block = $("pay-block");
+    const link = state.payLink.trim();
+    const show = Boolean(link) && isPro();
+    block.hidden = !show;
+    $("pay-link").value = state.payLink;
+    if (!show) return;
+    const url = /^https?:\/\//i.test(link) ? link : "https://" + link;
+    const a = $("pay-link-a");
+    a.href = url;
+    a.textContent = link.replace(/^https?:\/\//i, "");
+    try {
+      const q = qrcode(0, "M");
+      q.addData(url);
+      q.make();
+      $("pay-qr").src = q.createDataURL(4, 8);
+      $("pay-qr").hidden = false;
+    } catch { $("pay-qr").hidden = true; }
+  }
+
+  $("pay-link").addEventListener("input", () => {
+    if (!isPro()) { $("pay-link").value = state.payLink; openModal(); return; }
+    state.payLink = $("pay-link").value;
+    renderPay(); save();
+  });
+
   // ---------- Pro ----------
   const modal = $("pro-modal");
   const isPro = () => localStorage.getItem(PRO_KEY) === "1";
@@ -643,6 +806,8 @@
     $("buy-unavailable").hidden = configured;
     if (configured) buy.href = PAYMENT_LINK;
     els.accent.closest(".control-group").classList.toggle("locked", !isPro());
+    $("pay-link").closest(".control-group").classList.toggle("locked", !isPro());
+    renderPay();
   }
 
   $("btn-open-pro").addEventListener("click", openModal);
@@ -776,6 +941,8 @@
     renderLogo();
     renderItems();
     renderTotals();
+    renderClients();
+    renderLib();
     renderPro();
     renderList();
   }
