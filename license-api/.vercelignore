@@ -1,0 +1,4 @@
+.axyvera
+*.db
+.env*
+README.md
