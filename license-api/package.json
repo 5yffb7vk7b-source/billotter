@@ -1,0 +1,8 @@
+{
+  "name": "billotter-license",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@vercel/blob": "^2.5.0"
+  }
+}

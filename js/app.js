@@ -576,22 +576,74 @@
     return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
   }
 
+  const LICENSE_API = "https://billotter-license.vercel.app";
+
+  function activatePro(msg) {
+    localStorage.setItem(PRO_KEY, "1");
+    renderPro();
+    msg.textContent = "Unlocked — thank you!";
+    msg.className = "pro-hint ok";
+  }
+
   $("btn-unlock").addEventListener("click", async () => {
     const code = $("unlock-code").value.trim().toUpperCase();
     const msg = $("unlock-msg");
     if (!code) return;
     try {
-      if (await sha256hex(code) === UNLOCK_HASH) {
-        localStorage.setItem(PRO_KEY, "1");
-        renderPro();
-        msg.textContent = "Unlocked — thank you!";
+      if (await sha256hex(code) === UNLOCK_HASH) return activatePro(msg);
+      if (/^BILL-/.test(code)) {
+        msg.textContent = "Checking your code…";
+        msg.className = "pro-hint";
+        const res = await fetch(`${LICENSE_API}/api/verify`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (data.ok) return activatePro(msg);
+        msg.textContent = data.error === "unknown code"
+          ? "That code doesn't match a purchase — retrieve it below with your purchase email."
+          : (data.error || "Couldn't verify the code — try again in a minute.");
+        msg.className = "pro-hint err";
+        return;
+      }
+      msg.textContent = "That code doesn't look right — it's shown right after your purchase.";
+      msg.className = "pro-hint err";
+    } catch {
+      msg.textContent = "Couldn't verify the code — check your connection and try again.";
+      msg.className = "pro-hint err";
+    }
+  });
+
+  $("btn-lost-code").addEventListener("click", () => {
+    const row = $("email-row");
+    row.hidden = !row.hidden;
+    if (!row.hidden) $("buyer-email").focus();
+  });
+
+  $("btn-get-code").addEventListener("click", async () => {
+    const email = $("buyer-email").value.trim();
+    const msg = $("unlock-msg");
+    if (!email) return;
+    msg.textContent = "Looking up your purchase…";
+    msg.className = "pro-hint";
+    try {
+      const res = await fetch(`${LICENSE_API}/api/get-code`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (data.ok && data.code) {
+        $("unlock-code").value = data.code;
+        msg.textContent = "Code found and filled in — hit Activate.";
         msg.className = "pro-hint ok";
       } else {
-        msg.textContent = "That code doesn't look right — it's shown right after your purchase.";
+        msg.textContent = data.error || "Couldn't look that up — try again in a minute.";
         msg.className = "pro-hint err";
       }
     } catch {
-      msg.textContent = "Couldn't verify the code in this browser.";
+      msg.textContent = "Couldn't reach the license service — check your connection and try again.";
       msg.className = "pro-hint err";
     }
   });
