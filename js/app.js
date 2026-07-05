@@ -197,9 +197,11 @@
   const $ = (id) => document.getElementById(id);
   const els = {
     currency: $("currency"), taxRate: $("tax-rate"), discount: $("discount"),
+    discountType: $("discount-type"), taxLabel: $("tax-label"),
+    tax2Label: $("tax2-label"), tax2Rate: $("tax2-rate"),
     accent: $("accent-color"), docType: $("doc-type"), theme: $("theme"),
     docTitle: $("doc-title"), dueLabel: $("due-label"),
-    number: $("inv-number"), date: $("inv-date"), due: $("inv-due"),
+    number: $("inv-number"), refNumber: $("ref-number"), date: $("inv-date"), due: $("inv-due"),
     from: $("from"), to: $("to"), notes: $("notes"), terms: $("terms"),
     itemsBody: $("items-body"), amountPaid: $("amount-paid"),
     logoImg: $("logo-img"), logoFile: $("logo-file"),
@@ -211,9 +213,10 @@
 
   const defaultState = () => ({
     id: newId(),
-    number: "INV-0001", date: todayISO(), due: "",
+    number: "INV-0001", refNumber: "", date: todayISO(), due: "",
     from: "", to: "", notes: "", terms: "",
-    currency: guessCurrency(), taxRate: "", discount: "", amountPaid: "",
+    currency: guessCurrency(), taxRate: "", discount: "", discountType: "pct", amountPaid: "",
+    taxLabel: "", tax2Label: "", tax2Rate: "",
     accent: DEFAULT_ACCENT, docType: "invoice", theme: "classic",
     logo: "", payLink: "", paymentTerms: "", items: [{ desc: "", qty: "1", rate: "" }],
   });
@@ -244,6 +247,11 @@
     if (!(s.docType in DOC_TYPES)) s.docType = "invoice";
     if (!(s.theme in THEMES)) s.theme = "classic";
     s.payLink = String(s.payLink ?? "");
+    s.refNumber = String(s.refNumber ?? "");
+    s.discountType = s.discountType === "flat" ? "flat" : "pct";
+    s.taxLabel = String(s.taxLabel ?? "");
+    s.tax2Label = String(s.tax2Label ?? "");
+    s.tax2Rate = String(s.tax2Rate ?? "");
     if (s.paymentTerms !== "" && !(s.paymentTerms in TERM_DAYS)) s.paymentTerms = "";
     return s;
   }
@@ -319,21 +327,32 @@
 
   function totals(s = state) {
     const subtotal = s.items.reduce((sum, it) => sum + num(it.qty) * num(it.rate), 0);
-    const discount = subtotal * num(s.discount) / 100;
-    const taxed = (subtotal - discount) * num(s.taxRate) / 100;
-    const total = subtotal - discount + taxed;
-    return { subtotal, discount, taxed, total, due: total - num(s.amountPaid) };
+    const discount = s.discountType === "flat"
+      ? Math.min(num(s.discount), subtotal)                 // flat amount, never more than the subtotal
+      : subtotal * Math.min(num(s.discount), 100) / 100;    // percentage, capped at 100%
+    const base = subtotal - discount;
+    const taxed = base * num(s.taxRate) / 100;
+    const taxed2 = base * num(s.tax2Rate) / 100;
+    const total = base + taxed + taxed2;
+    return { subtotal, discount, taxed, taxed2, total, due: total - num(s.amountPaid) };
   }
 
   function renderTotals() {
     const t = totals(), f = fmt();
     $("t-subtotal").textContent = f.format(t.subtotal);
-    $("row-discount").hidden = !num(state.discount);
-    $("t-discount-pct").textContent = num(state.discount) + "%";
+    $("row-discount").hidden = !(t.discount > 0);
+    $("t-discount-label").textContent =
+      state.discountType === "flat" ? "Discount" : `Discount (${num(state.discount)}%)`;
     $("t-discount").textContent = "−" + f.format(t.discount);
     $("row-tax").hidden = !num(state.taxRate);
-    $("t-tax-pct").textContent = num(state.taxRate) + "%";
+    $("t-tax-label").textContent = `${state.taxLabel.trim() || "Tax"} (${num(state.taxRate)}%)`;
     $("t-tax").textContent = f.format(t.taxed);
+    const showTax2 = num(state.tax2Rate) > 0;
+    $("row-tax2").hidden = !showTax2;
+    if (showTax2) {
+      $("t-tax2-label").textContent = `${state.tax2Label.trim() || "Tax 2"} (${num(state.tax2Rate)}%)`;
+      $("t-tax2").textContent = f.format(t.taxed2);
+    }
     $("t-total").textContent = f.format(t.total);
     $("t-due").textContent = f.format(t.due);
     // Fully-settled invoices get the rubber stamp — receipts feel like receipts.
@@ -542,6 +561,20 @@
     }
   }
 
+  // Like bind(), but Pro-gated: non-Pro users get the upsell instead of the edit sticking.
+  function bindPro(el, key, after) {
+    el.value = state[key];
+    if (!el.dataset.bound) {
+      el.dataset.bound = "1";
+      el.addEventListener("input", () => {
+        if (!isPro()) { el.value = state[key]; openModal(); return; }
+        state[key] = el.value;
+        if (after) after();
+        save();
+      });
+    }
+  }
+
   function autogrow(ta) {
     const fit = () => { ta.style.height = "auto"; ta.style.height = ta.scrollHeight + "px"; };
     if (!ta.dataset.grow) {
@@ -626,6 +659,7 @@
     document.querySelectorAll(".sheet input[type=date]").forEach((el) => {
       if (!el.value) { printHidden.push(el.closest(".meta-row")); }
     });
+    if (!state.refNumber.trim()) printHidden.push(document.getElementById("ref-row"));
     if (!num(state.amountPaid)) printHidden.push(document.querySelector(".totals-paid"));
     printHidden.forEach((row) => { if (row) row.style.visibility = "hidden"; });
   });
@@ -643,7 +677,7 @@
     const numbers = [state.number, ...invoices.map((i) => i.number)];
     const next = nextNumber(numbers);
     state = { ...normalize(JSON.parse(JSON.stringify(state))), id: newId(), number: next,
-      date: todayISO(), due: "", to: "", notes: "", amountPaid: "",
+      refNumber: "", date: todayISO(), due: "", to: "", notes: "", amountPaid: "",
       items: [{ desc: "", qty: "1", rate: "" }] };
     hydrate(); save();
   });
@@ -726,13 +760,13 @@
       const s = String(v ?? "");
       return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
     };
-    const head = ["Number", "Date", "Due", "Type", "Client", "Currency",
+    const head = ["Number", "Ref", "Date", "Due", "Type", "Client", "Currency",
       "Subtotal", "Discount", "Tax", "Total", "Paid", "Balance"];
     const rows = invoices.map((inv) => {
       const t = totals(inv);
       const client = (inv.to.split("\n")[0] || "").trim();
-      return [inv.number, inv.date, inv.due, DOC_TYPES[inv.docType].title, client, inv.currency,
-        t.subtotal.toFixed(2), t.discount.toFixed(2), t.taxed.toFixed(2), t.total.toFixed(2),
+      return [inv.number, inv.refNumber, inv.date, inv.due, DOC_TYPES[inv.docType].title, client, inv.currency,
+        t.subtotal.toFixed(2), t.discount.toFixed(2), (t.taxed + t.taxed2).toFixed(2), t.total.toFixed(2),
         num(inv.amountPaid).toFixed(2), t.due.toFixed(2)].map(esc).join(",");
     });
     const csv = head.join(",") + "\n" + rows.join("\n") + "\n";
@@ -968,6 +1002,7 @@
     if (configured) buy.href = PAYMENT_LINK;
     els.accent.closest(".control-group").classList.toggle("locked", !isPro());
     $("pay-link").closest(".control-group").classList.toggle("locked", !isPro());
+    els.taxLabel.closest(".control-group").classList.toggle("locked", !isPro());
     renderPay();
   }
 
@@ -1088,7 +1123,12 @@
     bind(els.docType, "docType", applyDoc);
     bind(els.taxRate, "taxRate", renderTotals);
     bind(els.discount, "discount", renderTotals);
+    bind(els.discountType, "discountType", renderTotals);
+    bindPro(els.taxLabel, "taxLabel", renderTotals);
+    bindPro(els.tax2Label, "tax2Label", renderTotals);
+    bindPro(els.tax2Rate, "tax2Rate", renderTotals);
     bind(els.number, "number");
+    bind(els.refNumber, "refNumber");
     bind(els.date, "date", () => { if (state.paymentTerms) dueFromTerms(); });
     bind(els.due, "due", () => { state.paymentTerms = ""; applyTerms(); });
     bind(els.from, "from");

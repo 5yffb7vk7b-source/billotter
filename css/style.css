@@ -65,9 +65,15 @@ a { color: inherit; }
 .brand { text-decoration: none; font-size: 1.1rem; display: inline-flex; align-items: center; gap: .5rem; }
 .brand .mark { flex: none; }
 .brand strong { font-family: var(--display); font-weight: 620; font-size: 1.25rem; letter-spacing: .005em; }
-.topnav { display: flex; align-items: center; gap: 1.1rem; }
+.topnav { display: flex; align-items: center; gap: 1.1rem; flex-wrap: wrap; }
 .topnav a { text-decoration: none; color: var(--muted); font-size: .95rem; }
 .topnav a:hover { color: var(--text); }
+/* Phones: let the bar wrap to a second row instead of overflowing off-screen. */
+@media (max-width: 560px) {
+  .topbar-inner { flex-wrap: wrap; gap: .35rem 1rem; padding: .55rem 1rem; }
+  .topnav { width: 100%; gap: 1rem; font-size: .92rem; }
+  .topnav .btn-primary { margin-left: auto; padding: .42rem 1rem; }
+}
 
 .hero {
   padding: 4.5rem 1.25rem 3.5rem;
@@ -184,6 +190,14 @@ a { color: inherit; }
 .save-note { font-size: .78rem; color: var(--faint); text-align: center; margin: 0; }
 .pdf-hint { font-size: .74rem; color: var(--faint); text-align: center; margin: -.2rem 0 0; }
 .pro-tag { font-size: .68rem; color: var(--gold); }
+/* an input paired with a unit selector or a narrow second field */
+.input-unit { display: flex; gap: .4rem; align-items: center; }
+.input-unit > input { flex: 1 1 auto; min-width: 0; }
+.input-unit > select { flex: 0 0 auto; width: auto; padding-inline: .5rem; }
+.input-unit > .unit-narrow { flex: 0 0 4.2rem; text-align: right; }
+.tax2-group input { margin-bottom: .4rem; }
+.tax2-group .input-unit input { margin-bottom: 0; }
+.tax2-group.locked input { opacity: .55; }
 .accent-group input[type=color] {
   padding: .15rem; height: 2.2rem; cursor: pointer;
 }
