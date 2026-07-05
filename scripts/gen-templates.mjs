@@ -7,7 +7,6 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const BASE = "https://billotter.com";
-const FAVICON = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='5' y='3' width='22' height='26' rx='5' fill='%230d9488'/%3E%3Cpath d='M10.5 13.5c1.8-2.2 3.7-2.2 5.5 0s3.7 2.2 5.5 0' stroke='%23f2f7f3' stroke-width='2.4' stroke-linecap='round' fill='none'/%3E%3Cpath d='M10.5 20c1.8-2.2 3.7-2.2 5.5 0s3.7 2.2 5.5 0' stroke='%23f2f7f3' stroke-width='2.4' stroke-linecap='round' opacity='.5' fill='none'/%3E%3C/svg%3E`;
 const MARK = `<svg class="mark" width="21" height="21" viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect x="5" y="3" width="22" height="26" rx="5" fill="#0d9488"/><path d="M10.5 13.5c1.8-2.2 3.7-2.2 5.5 0s3.7 2.2 5.5 0" stroke="#f2f7f3" stroke-width="2.4" stroke-linecap="round"/><path d="M10.5 20c1.8-2.2 3.7-2.2 5.5 0s3.7 2.2 5.5 0" stroke="#f2f7f3" stroke-width="2.4" stroke-linecap="round" opacity=".5"/></svg>`;
 
 const NICHES = [
@@ -605,7 +604,10 @@ const head = (title, desc, canonicalPath, cssPath, extraLd = "") => `<!DOCTYPE h
   <meta name="twitter:image" content="${BASE}/og.png">
   <link rel="canonical" href="${BASE}/${canonicalPath}">
   <meta name="theme-color" content="#0f172a">
-  <link rel="icon" href="${FAVICON}">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="${cssPath}">
 ${extraLd}</head>
 <body>
