@@ -346,9 +346,20 @@
     renderItems();
     if (focus) {
       const rows = els.itemsBody.querySelectorAll("tr");
-      rows[rows.length - 1]?.querySelector("input")?.focus();
+      rows[rows.length - 1]?.querySelector("textarea")?.focus();
     }
     save();
+  }
+
+  // Reorder a line without retyping it. Keyboard-friendly: focus follows the moved row.
+  function moveItem(i, dir) {
+    const j = i + dir;
+    if (j < 0 || j >= state.items.length) return;
+    [state.items[i], state.items[j]] = [state.items[j], state.items[i]];
+    renderItems(); renderTotals(); save();
+    const row = els.itemsBody.querySelectorAll("tr")[j];
+    const btn = row?.querySelector(dir < 0 ? ".row-move-up" : ".row-move-down");
+    (btn && !btn.disabled ? btn : row?.querySelector("textarea"))?.focus();
   }
 
   function renderItems() {
@@ -395,6 +406,19 @@
 
       const tdX = document.createElement("td");
       tdX.className = "no-print";
+
+      const up = document.createElement("button");
+      up.className = "row-move row-move-up"; up.textContent = "↑"; up.title = "Move line up";
+      up.setAttribute("aria-label", `Move line ${i + 1} up`);
+      up.disabled = i === 0;
+      up.addEventListener("click", () => moveItem(i, -1));
+
+      const down = document.createElement("button");
+      down.className = "row-move row-move-down"; down.textContent = "↓"; down.title = "Move line down";
+      down.setAttribute("aria-label", `Move line ${i + 1} down`);
+      down.disabled = i === state.items.length - 1;
+      down.addEventListener("click", () => moveItem(i, 1));
+
       const x = document.createElement("button");
       x.className = "row-remove"; x.textContent = "✕"; x.title = "Remove line";
       x.setAttribute("aria-label", `Remove line ${i + 1}`);
@@ -419,7 +443,10 @@
         saveLib(); renderLib();
         els.saveNote.textContent = existing ? "Library item updated ✓" : "Saved to item library ✓";
       });
-      tdX.append(star, x);
+      const actions = document.createElement("div");
+      actions.className = "row-actions";
+      actions.append(up, down, star, x);
+      tdX.appendChild(actions);
 
       function updateRow() {
         tdAmount.textContent = fmt().format(num(item.qty) * num(item.rate));

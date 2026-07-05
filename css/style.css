@@ -285,7 +285,7 @@ a { color: inherit; }
 }
 .items td { border-bottom: 1px solid var(--line); padding: .25rem .15rem; vertical-align: middle; }
 .items td textarea { resize: none; display: block; }
-.col-qty { width: 4.5rem; } .col-rate { width: 7rem; } .col-amount { width: 8rem; } .col-x { width: 2rem; }
+.col-qty { width: 4.5rem; } .col-rate { width: 7rem; } .col-amount { width: 8rem; } .col-x { width: 5rem; }
 .items td.col-amount, .items th.col-amount { text-align: right; }
 .items td.col-amount { font-variant-numeric: tabular-nums; padding-right: .4rem; }
 .items input[type="number"] { text-align: right; }
@@ -579,6 +579,13 @@ h2 { font-family: var(--display); font-weight: 550; letter-spacing: -.005em; }
   color: #cbd5e1; font-size: .95rem; padding: .2rem .3rem; border-radius: 6px;
 }
 .row-save:hover { color: var(--gold); background: #fffbeb; }
+.row-actions { display: flex; align-items: center; justify-content: flex-end; gap: .02rem; }
+.row-move {
+  font: inherit; line-height: 1; cursor: pointer; border: 0; background: none;
+  color: #cbd5e1; font-size: .82rem; padding: .25rem .2rem; border-radius: 6px;
+}
+.row-move:hover:not(:disabled) { color: var(--accent-dark); background: #f0fdfa; }
+.row-move:disabled { opacity: .28; cursor: default; }
 
 /* ---------- pay-by-QR ---------- */
 .pay-block { display: flex; gap: .9rem; align-items: center; margin-top: 1.6rem; }
