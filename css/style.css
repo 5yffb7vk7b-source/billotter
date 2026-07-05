@@ -222,6 +222,16 @@ a { color: inherit; }
   color: var(--muted); cursor: pointer; text-decoration: underline;
 }
 .linklike:hover { color: var(--text); }
+.inv-summary {
+  font-size: .74rem; color: var(--muted);
+  background: var(--bg-deep); border: 1px solid var(--line-soft);
+  border-radius: 8px; padding: .45rem .55rem; margin-bottom: .6rem; line-height: 1.35;
+}
+.inv-summary .sum-year {
+  display: block; font-family: var(--mono); font-size: .62rem; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--faint); margin-bottom: .12rem;
+}
+.inv-summary .sum-line { font-variant-numeric: tabular-nums; }
 
 /* ---------- the invoice sheet ---------- */
 .sheet-wrap { min-width: 0; overflow-x: auto; }

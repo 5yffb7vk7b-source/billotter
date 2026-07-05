@@ -39,7 +39,7 @@
     "@type": "FAQPage",
     "mainEntity": [
       { "@type": "Question", "name": "Is Billotter really free?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Yes — unlimited invoices, all core features, PDF download, two themes. An optional one-time $9 Pro unlock adds the client book, an item library for your services and rates, a scannable pay-by-QR code on PDFs, premium themes, custom accent colors, and removes the small credit line from PDFs." } },
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes — unlimited invoices, all core features, automatic due dates, a year-to-date earnings tally, PDF download and two themes. An optional one-time $9 Pro unlock adds the client book, an item library for your services and rates, business profiles for multiple sender identities, a scannable pay-by-QR code on PDFs, CSV export of every invoice for accounting, premium themes, custom accent colors, and removes the small credit line from PDFs." } },
       { "@type": "Question", "name": "Can Billotter make estimates, quotes and receipts?",
         "acceptedAnswer": { "@type": "Answer", "text": "Yes — switch the document type in the sidebar and the sheet becomes an estimate, quote or receipt with matching labels. Numbering, totals and PDF download work the same." } },
       { "@type": "Question", "name": "Where does my invoice data go?",
@@ -124,6 +124,18 @@
       <label for="discount">Discount %</label>
       <input type="number" id="discount" min="0" max="100" step="0.01" placeholder="0">
     </div>
+    <div class="control-group">
+      <label for="pay-terms">Payment terms</label>
+      <select id="pay-terms">
+        <option value="">Custom / none</option>
+        <option value="receipt">Due on receipt</option>
+        <option value="7">Net 7</option>
+        <option value="14">Net 14</option>
+        <option value="15">Net 15</option>
+        <option value="30">Net 30</option>
+        <option value="60">Net 60</option>
+      </select>
+    </div>
     <div class="control-group accent-group">
       <label for="accent-color">Accent color <span class="pro-tag">Pro</span></label>
       <input type="color" id="accent-color" value="#0d9488">
@@ -143,11 +155,14 @@
     <p class="save-note" id="save-note">Saved locally ✓</p>
     <div class="inv-section">
       <div class="inv-title">Your invoices</div>
+      <div class="inv-summary" id="inv-summary" hidden></div>
       <div id="inv-list"></div>
       <div class="backup-row">
         <button class="linklike" id="btn-export" type="button">Export backup</button>
         <span aria-hidden="true">·</span>
         <button class="linklike" id="btn-import" type="button">Import</button>
+        <span aria-hidden="true">·</span>
+        <button class="linklike" id="btn-export-csv" type="button">CSV <span class="pro-tag">Pro</span></button>
         <input type="file" id="import-file" accept="application/json,.json" hidden>
       </div>
     </div>
@@ -172,7 +187,15 @@
 
       <div class="parties">
         <div class="party">
-          <div class="party-label">From</div>
+          <div class="party-label">From
+            <span class="client-tools no-print">
+              <button class="linklike" id="btn-save-profile" type="button" title="Save this as a business profile to reuse">Save profile</button>
+            </span>
+          </div>
+          <div class="client-row no-print" id="profile-row" hidden>
+            <select id="profile-pick" aria-label="Saved business profiles"></select>
+            <button class="client-forget" id="btn-forget-profile" type="button" title="Remove this saved profile" hidden>✕</button>
+          </div>
           <textarea id="from" rows="4" placeholder="Your name or business&#10;Address&#10;Email / phone&#10;Tax / VAT ID"></textarea>
         </div>
         <div class="party">
@@ -280,11 +303,12 @@
   <h2>Questions, answered</h2>
   <details open>
     <summary>Is it really free?</summary>
-    <p>Yes. The generator is fully free: unlimited invoices, all core features, PDF download, two themes. The only
-    paid thing is <strong>Pro</strong> — a one-time $9 that adds the <strong>client book</strong> (save clients, refill
-    an invoice in one click), an <strong>item library</strong> for your standard services and rates, a scannable
-    <strong>pay-by-QR</strong> code on your PDFs, premium themes and custom accent colors — and removes the small
-    “Created with Billotter” line. No subscription.</p>
+    <p>Yes. The generator is fully free: unlimited invoices, all core features, automatic due dates, a year-to-date
+    earnings tally, PDF download and two themes. The only paid thing is <strong>Pro</strong> — a one-time $9 that adds
+    the <strong>client book</strong> (save clients, refill an invoice in one click), an <strong>item library</strong>
+    for your standard services and rates, <strong>business profiles</strong> for multiple “From” identities, a scannable
+    <strong>pay-by-QR</strong> code on your PDFs, <strong>CSV export</strong> of every invoice for accounting, premium
+    themes and custom accent colors — and removes the small “Created with Billotter” line. No subscription.</p>
   </details>
   <details>
     <summary>Can I make estimates, quotes or receipts?</summary>
@@ -329,7 +353,9 @@
       <ul class="pro-list">
         <li><strong>Client book</strong> — save clients, refill an invoice in one click</li>
         <li><strong>Item library</strong> — your services &amp; rates, inserted instantly</li>
+        <li><strong>Business profiles</strong> — save multiple “From” identities, switch in a click</li>
         <li><strong>Pay-by-QR</strong> — your PayPal / Venmo link as a scannable code on every PDF</li>
+        <li><strong>CSV export</strong> — download every invoice for accounting &amp; taxes</li>
         <li>No “Created with Billotter” line on your PDFs</li>
         <li>Premium themes (<strong>Serif</strong> &amp; <strong>Bold</strong>) + custom accent color</li>
         <li>All future Pro features included forever</li>

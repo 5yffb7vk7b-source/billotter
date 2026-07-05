@@ -12,9 +12,12 @@
   const PRO_KEY = "billotter.pro";
   const CLIENTS_KEY = "billotter.clients.v1";
   const ITEMLIB_KEY = "billotter.itemlib.v1";
-  // Free taste of the Pro workflow features: one client, three saved items.
-  const FREE_CLIENTS = 1, FREE_LIB_ITEMS = 3;
+  const PROFILES_KEY = "billotter.profiles.v1";
+  // Free taste of the Pro workflow features: one client, three saved items, one profile.
+  const FREE_CLIENTS = 1, FREE_LIB_ITEMS = 3, FREE_PROFILES = 1;
   const DEFAULT_ACCENT = "#0d9488";
+  // Payment terms → net days added to the invoice date to compute the due date.
+  const TERM_DAYS = { receipt: 0, "7": 7, "14": 14, "15": 15, "30": 30, "60": 60 };
 
   // value = requires Pro
   const THEMES = { classic: false, minimal: false, serif: true, bold: true };
@@ -212,7 +215,7 @@
     from: "", to: "", notes: "", terms: "",
     currency: guessCurrency(), taxRate: "", discount: "", amountPaid: "",
     accent: DEFAULT_ACCENT, docType: "invoice", theme: "classic",
-    logo: "", payLink: "", items: [{ desc: "", qty: "1", rate: "" }],
+    logo: "", payLink: "", paymentTerms: "", items: [{ desc: "", qty: "1", rate: "" }],
   });
 
   function todayISO() {
@@ -241,6 +244,7 @@
     if (!(s.docType in DOC_TYPES)) s.docType = "invoice";
     if (!(s.theme in THEMES)) s.theme = "classic";
     s.payLink = String(s.payLink ?? "");
+    if (s.paymentTerms !== "" && !(s.paymentTerms in TERM_DAYS)) s.paymentTerms = "";
     return s;
   }
 
@@ -253,8 +257,10 @@
   }
   let clients = loadJsonList(CLIENTS_KEY).filter((c) => c && c.id && c.label && typeof c.to === "string");
   let itemLib = loadJsonList(ITEMLIB_KEY).filter((x) => x && x.id && typeof x.desc === "string");
+  let profiles = loadJsonList(PROFILES_KEY).filter((p) => p && p.id && p.label && typeof p.from === "string");
   const saveClients = () => { try { localStorage.setItem(CLIENTS_KEY, JSON.stringify(clients)); } catch { /* full */ } };
   const saveLib = () => { try { localStorage.setItem(ITEMLIB_KEY, JSON.stringify(itemLib)); } catch { /* full */ } };
+  const saveProfiles = () => { try { localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles)); } catch { /* full */ } };
 
   function load() {
     try {
@@ -427,8 +433,32 @@
   }
 
   // ---------- saved invoices ----------
+  // A quiet year-to-date tally so repeat users watch the money add up.
+  function renderSummary() {
+    const box = $("inv-summary");
+    if (!box) return;
+    const cur = state.currency, year = String(new Date().getFullYear());
+    const mine = invoices.filter((inv) =>
+      inv.docType === "invoice" && inv.currency === cur && String(inv.date).slice(0, 4) === year);
+    if (mine.length === 0) { box.hidden = true; box.textContent = ""; return; }
+    let invoiced = 0, outstanding = 0;
+    mine.forEach((inv) => { const t = totals(inv); invoiced += t.total; outstanding += Math.max(0, t.due); });
+    const f = new Intl.NumberFormat(undefined, { style: "currency", currency: cur });
+    box.textContent = "";
+    const yr = document.createElement("span");
+    yr.className = "sum-year";
+    yr.textContent = `${year} · ${cur}`;
+    const line = document.createElement("span");
+    line.className = "sum-line";
+    const outStr = outstanding > 0.005 ? ` · ${f.format(outstanding)} due` : "";
+    line.textContent = `${mine.length} invoice${mine.length === 1 ? "" : "s"} · ${f.format(invoiced)} invoiced${outStr}`;
+    box.append(yr, line);
+    box.hidden = false;
+  }
+
   function renderList() {
     if (!els.invList) return;
+    renderSummary();
     els.invList.textContent = "";
     if (invoices.length === 0) {
       const p = document.createElement("p");
@@ -603,7 +633,7 @@
   // ---------- backup (export / import) ----------
   $("btn-export").addEventListener("click", () => {
     upsertCurrent();
-    const payload = { app: "billotter", version: 1, exported: todayISO(), current: state, invoices, clients, itemLib };
+    const payload = { app: "billotter", version: 1, exported: todayISO(), current: state, invoices, clients, itemLib, profiles };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
@@ -639,6 +669,12 @@
           });
           saveLib(); renderLib();
         }
+        if (Array.isArray(data.profiles)) {
+          data.profiles.forEach((p) => {
+            if (p && p.id && p.label && !profiles.some((x) => x.id === p.id)) profiles.push(p);
+          });
+          saveProfiles(); renderProfiles();
+        }
         // Restore the exported working copy too — but never over unsaved work.
         if (data.current && !hasContent(state)) {
           const cur = normalize(data.current);
@@ -652,6 +688,34 @@
       }
     };
     reader.readAsText(file);
+  });
+
+  // Export every saved invoice as a spreadsheet — for the accountant, at tax time (Pro).
+  $("btn-export-csv").addEventListener("click", () => {
+    if (!isPro()) { openModal(); return; }
+    upsertCurrent();
+    if (invoices.length === 0) { els.saveNote.textContent = "No saved invoices to export yet."; return; }
+    const esc = (v) => {
+      const s = String(v ?? "");
+      return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    };
+    const head = ["Number", "Date", "Due", "Type", "Client", "Currency",
+      "Subtotal", "Discount", "Tax", "Total", "Paid", "Balance"];
+    const rows = invoices.map((inv) => {
+      const t = totals(inv);
+      const client = (inv.to.split("\n")[0] || "").trim();
+      return [inv.number, inv.date, inv.due, DOC_TYPES[inv.docType].title, client, inv.currency,
+        t.subtotal.toFixed(2), t.discount.toFixed(2), t.taxed.toFixed(2), t.total.toFixed(2),
+        num(inv.amountPaid).toFixed(2), t.due.toFixed(2)].map(esc).join(",");
+    });
+    const csv = head.join(",") + "\n" + rows.join("\n") + "\n";
+    const blob = new Blob([csv], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `billotter-invoices-${todayISO()}.csv`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    els.saveNote.textContent = `Exported ${invoices.length} invoice${invoices.length === 1 ? "" : "s"} to CSV ✓`;
   });
 
   // Highest trailing number across known invoices, plus one — avoids duplicates.
@@ -723,6 +787,53 @@
     els.saveNote.textContent = "Client removed ✓";
   });
 
+  // ---------- business profiles (Pro) ----------
+  // Save multiple "From" identities (business + freelance, or several brands) and swap in one click.
+  function renderProfiles() {
+    const row = $("profile-row"), sel = $("profile-pick");
+    if (!row || !sel) return;
+    row.hidden = profiles.length === 0;
+    if (row.hidden) return;
+    sel.textContent = "";
+    sel.add(new Option(`Saved profiles (${profiles.length})…`, ""));
+    profiles.forEach((p) => sel.add(new Option(p.label, p.id)));
+    const cur = profiles.find((p) => p.from === state.from);
+    sel.value = cur ? cur.id : "";
+    $("btn-forget-profile").hidden = !cur;
+  }
+
+  $("btn-save-profile").addEventListener("click", () => {
+    const label = (state.from.split("\n")[0] || "").trim();
+    if (!label) {
+      els.saveNote.textContent = "Fill in “From” first — the first line becomes the profile name.";
+      return;
+    }
+    const existing = profiles.find((p) => p.label.toLowerCase() === label.toLowerCase());
+    if (!existing && profiles.length >= FREE_PROFILES && !isPro()) { openModal(); return; }
+    if (existing) existing.from = state.from;
+    else profiles.unshift({ id: newId(), label, from: state.from });
+    saveProfiles(); renderProfiles();
+    els.saveNote.textContent = existing ? `Profile “${label}” updated ✓` : `Profile “${label}” saved ✓`;
+  });
+
+  $("profile-pick").addEventListener("change", () => {
+    const p = profiles.find((x) => x.id === $("profile-pick").value);
+    $("btn-forget-profile").hidden = !p;
+    if (!p) return;
+    state.from = p.from;
+    els.from.value = p.from;
+    autogrow(els.from);
+    save();
+  });
+
+  $("btn-forget-profile").addEventListener("click", () => {
+    const id = $("profile-pick").value;
+    if (!id) return;
+    profiles = profiles.filter((p) => p.id !== id);
+    saveProfiles(); renderProfiles();
+    els.saveNote.textContent = "Profile removed ✓";
+  });
+
   // ---------- item library ----------
   function renderLib() {
     const sel = $("lib-pick");
@@ -789,6 +900,29 @@
     if (!isPro()) { $("pay-link").value = state.payLink; openModal(); return; }
     state.payLink = $("pay-link").value;
     renderPay(); save();
+  });
+
+  // ---------- payment terms → due date ----------
+  function applyTerms() {
+    const sel = $("pay-terms");
+    if (sel) sel.value = state.paymentTerms;
+  }
+
+  // Set the due date to invoice date + N days. Called on term change and when the date moves.
+  function dueFromTerms() {
+    if (state.paymentTerms === "" || !state.date) return;
+    const base = new Date(state.date + "T00:00:00");
+    if (Number.isNaN(base.getTime())) return;
+    base.setDate(base.getDate() + (TERM_DAYS[state.paymentTerms] || 0));
+    const iso = `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, "0")}-${String(base.getDate()).padStart(2, "0")}`;
+    state.due = iso;
+    els.due.value = iso;
+  }
+
+  $("pay-terms").addEventListener("change", () => {
+    state.paymentTerms = $("pay-terms").value;
+    dueFromTerms();
+    save();
   });
 
   // ---------- Pro ----------
@@ -928,8 +1062,8 @@
     bind(els.taxRate, "taxRate", renderTotals);
     bind(els.discount, "discount", renderTotals);
     bind(els.number, "number");
-    bind(els.date, "date");
-    bind(els.due, "due");
+    bind(els.date, "date", () => { if (state.paymentTerms) dueFromTerms(); });
+    bind(els.due, "due", () => { state.paymentTerms = ""; applyTerms(); });
     bind(els.from, "from");
     bind(els.to, "to");
     bind(els.notes, "notes");
@@ -943,6 +1077,9 @@
     renderTotals();
     renderClients();
     renderLib();
+    renderProfiles();
+    applyTerms();
+    if (state.paymentTerms) dueFromTerms();
     renderPro();
     renderList();
   }

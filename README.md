@@ -15,6 +15,7 @@ Every "free" invoice tool wants a signup, a trial, or your clients' data on thei
 - Invoices, **estimates, quotes and receipts** — one click to switch
 - Line items with autogrow descriptions, tax, discount, partial payments & balance due
 - Automatic **PAID stamp** on settled invoices
+- **Automatic due dates** (Due on receipt, Net 7/14/30…) and a **year-to-date earnings tally**
 - **26 currencies** with correct locale formatting (`Intl.NumberFormat`)
 - Your logo, smart invoice numbering, PDF named after the document ("INV-0007 — Acme Co")
 - Local autosave + a sidebar of all your invoices; JSON backup export/import
@@ -23,7 +24,7 @@ Every "free" invoice tool wants a signup, a trial, or your clients' data on thei
 
 ## Pro ($9 once, lifetime)
 
-Client book (save clients, one-click refill) · item library (your services & rates) · **pay-by-QR** (your PayPal/Venmo link as a scannable code on every PDF) · premium themes · custom accent color · no credit line on PDFs.
+Client book (save clients, one-click refill) · item library (your services & rates) · **business profiles** (multiple "From" identities) · **pay-by-QR** (your PayPal/Venmo link as a scannable code on every PDF) · **CSV export** (every invoice, for accounting & taxes) · premium themes · custom accent color · no credit line on PDFs.
 
 ## Development
 
