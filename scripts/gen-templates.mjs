@@ -619,6 +619,7 @@ const topbar = (root) => `
     <a class="brand" href="${root}">${MARK} <strong>Billotter</strong></a>
     <nav class="topnav">
       <a href="${root}templates/">Templates</a>
+      <a href="${root}guides/">Guides</a>
       <a href="${root}#faq">FAQ</a>
       <a class="btn btn-primary" href="${root}#app">Create an invoice</a>
     </nav>

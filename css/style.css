@@ -469,6 +469,32 @@ h2 { font-family: var(--display); font-weight: 550; letter-spacing: -.005em; }
 .page details p { color: var(--muted); margin-bottom: .2rem; }
 .backlink { margin-top: 2.5rem; }
 
+/* ---------- guides / long-form ---------- */
+.page h3 { font-size: 1.08rem; margin: 1.7rem 0 .5rem; color: var(--text); }
+.page ol { padding-left: 1.2rem; }
+.page ol li { margin-bottom: .55rem; }
+.page code {
+  font-family: var(--mono); font-size: .86em;
+  background: var(--bg-soft); border: 1px solid var(--line-soft);
+  border-radius: 5px; padding: .08em .38em; color: var(--glint); white-space: nowrap;
+}
+.guide-meta { font-size: .8rem; color: var(--faint); margin: .1rem 0 0; }
+.toc {
+  border: 1px solid var(--line-soft); background: var(--bg-soft);
+  border-radius: var(--radius); padding: 1rem 1.2rem; margin: 1.6rem 0;
+}
+.toc strong { display: block; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: .55rem; }
+.toc ul { list-style: none; padding: 0; margin: 0; display: grid; gap: .4rem; }
+.toc a { color: var(--glint); text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+.callout {
+  border-left: 3px solid var(--accent); background: var(--bg-soft);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: .85rem 1.1rem; margin: 1.5rem 0;
+}
+.callout p { margin: 0; color: var(--muted); }
+.callout strong { color: var(--text); }
+
 /* ---------- modal ---------- */
 .modal-backdrop {
   position: fixed; inset: 0; z-index: 100;
